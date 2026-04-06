@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+	<AddIn Type="Application">
+		<Name>NavisBOQ Revit MCP</Name>
+		<Assembly>C:\Users\fabian.banuet\source\repos\RevitMCPBOQ\NavisBOQ.Revit.Plugin\bin\Debug\NavisBOQ.Revit.Plugin.dll</Assembly>
+		<AddInId>8D83C886-B739-4ACD-A9DB-1BC78F315B2A</AddInId>
+		<FullClassName>NavisBOQ.Revit.Plugin.Entry.App</FullClassName>
+		<VendorId>GPCRD</VendorId>
+		<VendorDescription>GPC Construccion RESEARCHDEVELOPMENTLABS</VendorDescription>
+	</AddIn>
+
+	<AddIn Type="Command">
+		<Name>NavisBOQ Revit MCP Command</Name>
+		<Assembly>C:\Users\fabian.banuet\source\repos\RevitMCPBOQ\NavisBOQ.Revit.Plugin\bin\Debug\NavisBOQ.Revit.Plugin.dll</Assembly>
+		<AddInId>9A5A1D94-23F4-4A9A-8D2F-5A6C0E237001</AddInId>
+		<FullClassName>NavisBOQ.Revit.Plugin.Entry.AppCommand</FullClassName>
+		<VendorId>GPCRD</VendorId>
+		<VendorDescription>GPC Construccion RESEARCHDEVELOPMENTLABS</VendorDescription>
+	</AddIn>
+</RevitAddIns>

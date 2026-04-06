@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{609DB675-7BFF-417E-B81C-B145E52C901C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>NavisBOQ.Revit.Plugin</RootNamespace>
+    <AssemblyName>NavisBOQ.Revit.Plugin</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="RevitAPI">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Revit 2025\RevitAPI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\Revit 2025\RevitAPIUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Automation\BridgePoller.cs" />
+    <Compile Include="Automation\BridgeRequestHandler.cs" />
+    <Compile Include="Automation\RevitBridgeState.cs" />
+    <Compile Include="Entry\App.cs" />
+    <Compile Include="Entry\AppCommand.cs" />
+    <Compile Include="Infrastructure\BridgePaths.cs" />
+    <Compile Include="Infrastructure\RequestEnvelope.cs" />
+    <Compile Include="Infrastructure\ResponseEnvelope.cs" />
+    <Compile Include="Infrastructure\RevitAppContext.cs" />
+    <Compile Include="Infrastructure\RevitUnitUtils.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RevitServices\IRevitParameterReaderService.cs" />
+    <Compile Include="RevitServices\IRevitSelectionScopeService.cs" />
+    <Compile Include="RevitServices\IRevitSnapshotService.cs" />
+    <Compile Include="RevitServices\RevitParameterReaderService.cs" />
+    <Compile Include="RevitServices\RevitPreflightService.cs" />
+    <Compile Include="RevitServices\RevitSelectionScopeService.cs" />
+    <Compile Include="RevitServices\RevitSnapshotExtractionService.cs" />
+    <Compile Include="RevitServices\RevitSnapshotService.cs" />
+    <Compile Include="Services\RevitRequestDispatcher.cs" />
+    <Compile Include="ToolHandlers\ActiveDocumentInfoToolHandler.cs" />
+    <Compile Include="ToolHandlers\DiagnoseSelectionToolHandler.cs" />
+    <Compile Include="ToolHandlers\ExpandElectricalDetailToolHandler.cs" />
+    <Compile Include="ToolHandlers\IToolHandler.cs" />
+    <Compile Include="ToolHandlers\ListAvailableToolsToolHandler.cs" />
+    <Compile Include="ToolHandlers\PingToolHandler.cs" />
+    <Compile Include="ToolHandlers\RunPreconstruccion4ToolHandler.cs" />
+    <Compile Include="ToolHandlers\RunPreconstruccion5ToolHandler.cs" />
+    <Compile Include="Transport\PluginHttpRequest.cs" />
+    <Compile Include="Transport\PluginHttpResponse.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Commands\" />
+    <Folder Include="ExternalEvents\" />
+    <Folder Include="Models\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NavisBOQ.Core\NavisBOQ.Core.csproj">
+      <Project>{7675aa43-9ee1-42d6-89e7-71bfc05fc8ad}</Project>
+      <Name>NavisBOQ.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NavisBOQ.Revit.Plugin.addin" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

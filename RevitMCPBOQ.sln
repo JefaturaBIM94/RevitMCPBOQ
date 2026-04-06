@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35806.99
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NavisBOQ.Revit.Plugin", "NavisBOQ.Revit.Plugin\NavisBOQ.Revit.Plugin.csproj", "{609DB675-7BFF-417E-B81C-B145E52C901C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NavisBOQ.Core", "NavisBOQ.Core\NavisBOQ.Core.csproj", "{7675AA43-9EE1-42D6-89E7-71BFC05FC8AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NavisBOQ.Revit.McpServer", "NavisBOQ.Revit.McpServer\NavisBOQ.Revit.McpServer.csproj", "{9FC2A5B7-BD3E-454A-ABAD-8E1A81233B8F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{609DB675-7BFF-417E-B81C-B145E52C901C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{609DB675-7BFF-417E-B81C-B145E52C901C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{609DB675-7BFF-417E-B81C-B145E52C901C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{609DB675-7BFF-417E-B81C-B145E52C901C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7675AA43-9EE1-42D6-89E7-71BFC05FC8AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7675AA43-9EE1-42D6-89E7-71BFC05FC8AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7675AA43-9EE1-42D6-89E7-71BFC05FC8AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7675AA43-9EE1-42D6-89E7-71BFC05FC8AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FC2A5B7-BD3E-454A-ABAD-8E1A81233B8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FC2A5B7-BD3E-454A-ABAD-8E1A81233B8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FC2A5B7-BD3E-454A-ABAD-8E1A81233B8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FC2A5B7-BD3E-454A-ABAD-8E1A81233B8F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2E0E87C1-999D-4C7A-BAE5-F6518E82CA41}
+	EndGlobalSection
+EndGlobal
