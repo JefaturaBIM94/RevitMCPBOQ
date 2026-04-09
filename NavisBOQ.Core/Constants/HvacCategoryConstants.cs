@@ -11,8 +11,18 @@ namespace NavisBOQ.Core.Constants
                 { "Ducts", ("Conductos", "ml") },
                 { "Conductos", ("Conductos", "ml") },
 
+                // Fittings base
                 { "Duct Fittings", ("Uniones de conducto", "pza") },
                 { "Uniones de conducto", ("Uniones de conducto", "pza") },
+
+                // Auxiliares que el mapper podrá reclasificar en Reducciones / Codos y accesorios
+                { "Rectangular Transition", ("Reducciones", "pza") },
+                { "Transition", ("Reducciones", "pza") },
+                { "Reducciones", ("Reducciones", "pza") },
+
+                { "Elbow", ("Codos y accesorios", "pza") },
+                { "Rectangular Elbow", ("Codos y accesorios", "pza") },
+                { "Codos", ("Codos y accesorios", "pza") },
 
                 { "Duct Accessories", ("Accesorios de conductos", "pza") },
                 { "Accesorios de conductos", ("Accesorios de conductos", "pza") },
@@ -50,7 +60,13 @@ namespace NavisBOQ.Core.Constants
         public static bool IsDuctFittingLike(string category)
         {
             return Eq(category, "Duct Fittings")
-                || Eq(category, "Uniones de conducto");
+                || Eq(category, "Uniones de conducto")
+                || Eq(category, "Rectangular Transition")
+                || Eq(category, "Transition")
+                || Eq(category, "Reducciones")
+                || Eq(category, "Elbow")
+                || Eq(category, "Rectangular Elbow")
+                || Eq(category, "Codos");
         }
 
         public static bool IsPipeLike(string category)

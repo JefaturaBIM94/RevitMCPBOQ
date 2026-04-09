@@ -11,30 +11,48 @@ namespace NavisBOQ.Core.HVAC
             if (snap == null || row == null)
                 return row;
 
-            if (HvacCategoryConstants.IsDuctLike(snap.Category))
-                return ApplyDuctWeight(snap, row);
+            var working = CloneAndCompleteFromSize(snap);
 
-            if (HvacCategoryConstants.IsDuctFittingLike(snap.Category))
-                return ApplyFittingWeight(snap, row);
+            row.Shape = ResolveShape(working);
+            row.PressureClass = ResolvePressureClass(working);
+
+            row.BaseInches = ResolveBaseInches(working, row.Shape);
+            row.GaugeCode = ResolveGaugeCodeFromRevitRule(row.BaseInches);
+            row.Gauge = "Cal " + row.GaugeCode;
+
+            row.PerimetroM = ResolvePerimetroM(working, row.Shape);
+
+            if (working.HasSheetMetalKgRaw)
+            {
+                row.KgRevitParameter = working.SheetMetalKgRaw;
+                row.HasKgRevitParameter = true;
+            }
+
+            if (HvacCategoryConstants.IsDuctLike(working.Category))
+                return ApplyDuctWeight(working, row);
+
+            if (HvacCategoryConstants.IsDuctFittingLike(working.Category))
+                return ApplyFittingWeight(working, row);
 
             return row;
         }
 
         private HvacRunRow ApplyDuctWeight(ElementSnapshot snap, HvacRunRow row)
         {
-            row.Shape = ResolveShape(snap);
-            row.PressureClass = ResolvePressureClass(snap);
-            row.Gauge = ResolveGauge(row.Shape, snap, row.PressureClass);
-            row.ThicknessMm = GaugeToThicknessMm(row.Gauge);
-            row.DensityKgM3 = ResolveDensity(snap);
+            double longitud = MaxNonZero(snap.LengthByInstanceM, snap.LengthM);
+            row.LongitudLaminaM = longitud;
 
-            double area = snap.AreaM2 > 0 ? snap.AreaM2 : EstimateDuctArea(snap, row.Shape);
-            row.AreaM2 = area > 0 ? area : 0.0;
-
-            if (row.AreaM2 > 0 && row.ThicknessMm > 0 && row.DensityKgM3 > 0)
+            if (row.PerimetroM > 0 && row.LongitudLaminaM > 0)
             {
-                row.Kg = row.AreaM2 * (row.ThicknessMm / 1000.0) * row.DensityKgM3;
-                row.KgMethod = "DirectArea";
+                row.KgCalculated = CalculateKgByGauge(row.GaugeCode, row.PerimetroM, row.LongitudLaminaM);
+                row.Kg = row.KgCalculated;
+                row.KgMethod = "RevitFormulaReplica";
+            }
+            else
+            {
+                row.KgCalculated = 0.0;
+                row.Kg = 0.0;
+                row.KgMethod = "FallbackFactor";
             }
 
             return row;
@@ -42,33 +60,117 @@ namespace NavisBOQ.Core.HVAC
 
         private HvacRunRow ApplyFittingWeight(ElementSnapshot snap, HvacRunRow row)
         {
-            row.Shape = ResolveShape(snap);
-            row.PressureClass = ResolvePressureClass(snap);
-            row.Gauge = ResolveGauge(row.Shape, snap, row.PressureClass);
-            row.ThicknessMm = GaugeToThicknessMm(row.Gauge);
-            row.DensityKgM3 = ResolveDensity(snap);
+            string sub = (snap.FittingSubcategory ?? "").Trim();
 
-            double area = 0.0;
-
-            if (snap.AreaM2 > 0)
+            if (string.Equals(sub, "Transition", StringComparison.OrdinalIgnoreCase))
             {
-                area = snap.AreaM2;
-                row.KgMethod = "DirectArea";
-            }
-            else
-            {
-                area = EstimateFittingArea(snap, row.Shape, out string method);
-                row.KgMethod = method;
+                row.DimensionCM = ResolveTransitionDimensionCM(snap);
+                if (row.PerimetroM > 0 && row.DimensionCM > 0)
+                {
+                    row.KgCalculated = CalculateKgByGauge(row.GaugeCode, row.PerimetroM, row.DimensionCM);
+                    row.Kg = row.KgCalculated;
+                    row.KgMethod = "RevitFormulaReplica_Transition";
+                    return row;
+                }
             }
 
-            row.AreaM2 = area > 0 ? area : 0.0;
+            row.LongitudLaminaM = ResolveFittingSheetLengthM(snap, row.Shape);
 
-            if (row.AreaM2 > 0 && row.ThicknessMm > 0 && row.DensityKgM3 > 0)
+            if (row.PerimetroM > 0 && row.LongitudLaminaM > 0)
             {
-                row.Kg = row.AreaM2 * (row.ThicknessMm / 1000.0) * row.DensityKgM3;
+                row.KgCalculated = CalculateKgByGauge(row.GaugeCode, row.PerimetroM, row.LongitudLaminaM);
+                row.Kg = row.KgCalculated;
+                row.KgMethod = "RevitFormulaReplica_Fitting";
+                return row;
             }
+
+            row.KgCalculated = 0.0;
+            row.Kg = 0.0;
+            row.KgMethod = "FallbackFactor";
 
             return row;
+        }
+
+        private ElementSnapshot CloneAndCompleteFromSize(ElementSnapshot snap)
+        {
+            var c = new ElementSnapshot
+            {
+                Category = snap.Category,
+                Type = snap.Type,
+                Family = snap.Family,
+                Material = snap.Material,
+                TypeMaterial = snap.TypeMaterial,
+                SystemClassification = snap.SystemClassification,
+                SystemName = snap.SystemName,
+                SystemType = snap.SystemType,
+
+                AreaM2 = snap.AreaM2,
+                LengthM = snap.LengthM,
+                LengthByInstanceM = snap.LengthByInstanceM,
+
+                SizeText = snap.SizeText,
+                OverallSizeText = snap.OverallSizeText,
+                FreeSizeText = snap.FreeSizeText,
+
+                DimensionA = snap.DimensionA,
+                DimensionB = snap.DimensionB,
+                DimensionC = snap.DimensionC,
+
+                DiameterM = snap.DiameterM,
+                EquivalentDiameterM = snap.EquivalentDiameterM,
+
+                DuctWidthM = snap.DuctWidthM,
+                DuctHeightM = snap.DuctHeightM,
+                DuctWidth1M = snap.DuctWidth1M,
+                DuctHeight1M = snap.DuctHeight1M,
+                DuctWidth2M = snap.DuctWidth2M,
+                DuctHeight2M = snap.DuctHeight2M,
+                DuctLengthM = snap.DuctLengthM,
+                DuctLength1M = snap.DuctLength1M,
+
+                WidthOffsetM = snap.WidthOffsetM,
+                HeightOffsetM = snap.HeightOffsetM,
+                CenterRadiusM = snap.CenterRadiusM,
+                AngleDeg = snap.AngleDeg,
+
+                FittingSubcategory = snap.FittingSubcategory,
+                SheetMetalKgRaw = snap.SheetMetalKgRaw,
+                HasSheetMetalKgRaw = snap.HasSheetMetalKgRaw,
+
+                PieceBaseM = snap.PieceBaseM,
+                PieceHeightM = snap.PieceHeightM,
+                ReportingAngleDeg = snap.ReportingAngleDeg,
+            };
+
+            if (!string.IsNullOrWhiteSpace(c.SizeText))
+            {
+                var parsed = HvacFittingSizeParser.Parse(c.SizeText);
+
+                if (parsed.Success)
+                {
+                    if (parsed.IsRectangular)
+                    {
+                        if (c.DuctWidth1M <= 0) c.DuctWidth1M = parsed.Width1M;
+                        if (c.DuctHeight1M <= 0) c.DuctHeight1M = parsed.Height1M;
+                        if (c.DuctWidth2M <= 0) c.DuctWidth2M = parsed.Width2M;
+                        if (c.DuctHeight2M <= 0) c.DuctHeight2M = parsed.Height2M;
+
+                        if (c.DimensionA <= 0) c.DimensionA = parsed.Width1M;
+                        if (c.DimensionB <= 0) c.DimensionB = parsed.Height1M;
+                    }
+
+                    if (parsed.IsCircular)
+                    {
+                        if (c.DiameterM <= 0) c.DiameterM = parsed.Diameter1M;
+                        if (c.EquivalentDiameterM <= 0) c.EquivalentDiameterM = parsed.Diameter2M;
+                    }
+                }
+            }
+
+            if (c.DuctWidthM <= 0) c.DuctWidthM = MaxNonZero(c.DuctWidth1M, c.DuctWidth2M, c.DimensionA);
+            if (c.DuctHeightM <= 0) c.DuctHeightM = MaxNonZero(c.DuctHeight1M, c.DuctHeight2M, c.DimensionB);
+
+            return c;
         }
 
         public string ResolveShape(ElementSnapshot snap)
@@ -76,14 +178,22 @@ namespace NavisBOQ.Core.HVAC
             if (snap == null)
                 return "Unknown";
 
-            if (snap.DimensionA > 0 && snap.DimensionB > 0)
-                return "Rectangular";
+            if (snap.DiameterM > 0 || snap.EquivalentDiameterM > 0)
+                return "Circular";
 
-            if (snap.SizeText != null && snap.SizeText.Contains("x"))
+            if ((snap.DimensionA > 0 && snap.DimensionB > 0) ||
+                (snap.DuctWidthM > 0 && snap.DuctHeightM > 0) ||
+                (snap.DuctWidth1M > 0 && snap.DuctHeight1M > 0) ||
+                (snap.DuctWidth2M > 0 && snap.DuctHeight2M > 0))
                 return "Rectangular";
 
             if (!string.IsNullOrWhiteSpace(snap.SizeText))
+            {
+                if (snap.SizeText.Contains("x"))
+                    return "Rectangular";
+
                 return "Circular";
+            }
 
             return "Unknown";
         }
@@ -102,113 +212,208 @@ namespace NavisBOQ.Core.HVAC
                 c.IndexOf("return", StringComparison.OrdinalIgnoreCase) >= 0)
                 return "A";
 
-            if (c.IndexOf("aire exterior", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                c.IndexOf("outside air", StringComparison.OrdinalIgnoreCase) >= 0)
-                return "B";
-
             return "A";
         }
 
-        public string ResolveGauge(string shape, ElementSnapshot snap, string pressureClass)
+        private string ResolveGaugeCodeFromRevitRule(double baseInches)
         {
-            double majorMm = ResolveMajorDimensionMm(snap, shape);
+            if (baseInches <= 0) return "24";
+            if (baseInches < 14.0) return "26";
+            if (baseInches < 31.0) return "24";
+            if (baseInches < 61.0) return "22";
+            if (baseInches < 97.0) return "20";
+            return "18";
+        }
 
-            if (majorMm <= 0)
-                return "Cal 24";
+        private double ResolveBaseInches(ElementSnapshot snap, string shape)
+        {
+            double baseMeters;
 
             if (string.Equals(shape, "Circular", StringComparison.OrdinalIgnoreCase))
             {
-                if (majorMm <= 500) return pressureClass == "A" ? "Cal 26" : "Cal 24";
-                if (majorMm <= 900) return pressureClass == "A" ? "Cal 24" : "Cal 22";
-                if (majorMm <= 1200) return pressureClass == "A" ? "Cal 22" : "Cal 20";
-                return "Cal 18";
+                baseMeters = MaxNonZero(
+                    snap.DiameterM,
+                    snap.EquivalentDiameterM,
+                    snap.DimensionA,
+                    snap.DimensionB);
             }
-
-            if (majorMm <= 300) return pressureClass == "A" ? "Cal 26" : "Cal 24";
-            if (majorMm <= 450) return pressureClass == "A" ? "Cal 26" : "Cal 24";
-            if (majorMm <= 750) return pressureClass == "A" ? "Cal 24" : "Cal 22";
-            if (majorMm <= 1200) return pressureClass == "A" ? "Cal 22" : "Cal 20";
-            if (majorMm <= 1800) return pressureClass == "A" ? "Cal 20" : "Cal 18";
-
-            return "Cal 16";
-        }
-
-        public double GaugeToThicknessMm(string gauge)
-        {
-            switch ((gauge ?? "").Trim())
+            else
             {
-                case "Cal 26": return 0.48;
-                case "Cal 24": return 0.61;
-                case "Cal 22": return 0.79;
-                case "Cal 20": return 0.95;
-                case "Cal 18": return 1.21;
-                case "Cal 16": return 1.52;
-                default: return 0.61;
+                baseMeters = MaxNonZero(
+                    snap.DimensionA,
+                    snap.DimensionB,
+                    snap.DuctWidthM,
+                    snap.DuctHeightM,
+                    snap.DuctWidth1M,
+                    snap.DuctHeight1M,
+                    snap.DuctWidth2M,
+                    snap.DuctHeight2M);
             }
+
+            return baseMeters / 0.0254;
         }
 
-        public double ResolveDensity(ElementSnapshot snap)
+        private double ResolvePerimetroM(ElementSnapshot snap, string shape)
         {
-            var mat = ((snap.TypeMaterial ?? "") + " " + (snap.Material ?? "")).Trim();
+            if (string.Equals(shape, "Circular", StringComparison.OrdinalIgnoreCase))
+            {
+                double d = MaxNonZero(
+                    snap.DiameterM,
+                    snap.EquivalentDiameterM);
 
-            if (mat.IndexOf("aluminum", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                mat.IndexOf("aluminio", StringComparison.OrdinalIgnoreCase) >= 0)
-                return 2700.0;
+                if (d > 0)
+                    return Math.PI * d;
+            }
 
-            if (mat.IndexOf("stainless", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                mat.IndexOf("inox", StringComparison.OrdinalIgnoreCase) >= 0)
-                return 8000.0;
+            double w = MaxNonZero(
+                snap.DuctWidthM,
+                snap.DuctWidth1M,
+                snap.DuctWidth2M,
+                snap.DimensionA,
+                snap.PieceBaseM);
 
-            return 7850.0;
+            double h = MaxNonZero(
+                snap.DuctHeightM,
+                snap.DuctHeight1M,
+                snap.DuctHeight2M,
+                snap.DimensionB,
+                snap.PieceHeightM);
+
+            if (w > 0 && h > 0)
+                return 2.0 * (w + h);
+
+            return 0.0;
         }
 
-        private double EstimateDuctArea(ElementSnapshot snap, string shape)
+        private double ResolveTransitionDimensionCM(ElementSnapshot snap)
         {
+            if (snap.DimensionC > 0)
+                return snap.DimensionC;
+
+            if (snap.DuctLengthM > 0)
+                return snap.DuctLengthM;
+
+            if (snap.DuctLength1M > 0)
+                return snap.DuctLength1M;
+
+            if (snap.LengthByInstanceM > 0)
+                return snap.LengthByInstanceM;
+
+            return 0.0;
+        }
+
+        private double ResolveFittingSheetLengthM(ElementSnapshot snap, string shape)
+        {
+            string sub = (snap.FittingSubcategory ?? "").Trim();
+
+            // 1) Elbows con radio y ángulo
+            if (string.Equals(sub, "Elbow", StringComparison.OrdinalIgnoreCase))
+            {
+                double radius = MaxNonZero(snap.CenterRadiusM);
+                double angleDeg = MaxNonZero(snap.AngleDeg, snap.ReportingAngleDeg, 90.0);
+
+                if (radius > 0 && angleDeg > 0)
+                {
+                    double theta = angleDeg * Math.PI / 180.0;
+                    return radius * theta;
+                }
+            }
+
+            // 2) Longitudes explícitas
+            double explicitLength = MaxNonZero(
+                snap.DuctLengthM,
+                snap.DuctLength1M,
+                snap.DimensionC,
+                snap.LengthByInstanceM,
+                snap.LengthM);
+
+            if (explicitLength > 0)
+                return explicitLength;
+
+            // 3) Offsets como proxy de longitud desarrollada
+            double widthOffset = MaxNonZero(snap.WidthOffsetM);
+            double heightOffset = MaxNonZero(snap.HeightOffsetM);
+
+            if (widthOffset > 0 || heightOffset > 0)
+            {
+                double diag = Math.Sqrt((widthOffset * widthOffset) + (heightOffset * heightOffset));
+                if (diag > 0)
+                    return diag;
+            }
+
+            // 4) Fallback geométrico por sección
             if (string.Equals(shape, "Rectangular", StringComparison.OrdinalIgnoreCase))
             {
-                if (snap.DimensionA > 0 && snap.DimensionB > 0 && snap.LengthByInstanceM > 0)
+                double w = MaxNonZero(
+                    snap.DuctWidthM,
+                    snap.DuctWidth1M,
+                    snap.DuctWidth2M,
+                    snap.DimensionA,
+                    snap.PieceBaseM);
+
+                double h = MaxNonZero(
+                    snap.DuctHeightM,
+                    snap.DuctHeight1M,
+                    snap.DuctHeight2M,
+                    snap.DimensionB,
+                    snap.PieceHeightM);
+
+                if (w > 0 && h > 0)
                 {
-                    double perimeter = 2.0 * (snap.DimensionA + snap.DimensionB);
-                    return perimeter * snap.LengthByInstanceM;
+                    double baseDim = Math.Max(w, h);
+
+                    // longitud equivalente mínima razonable para fitting genérico
+                    // evita ceros y se aproxima mejor que dejar vacío
+                    return Math.Max(baseDim * 0.60, 0.15);
                 }
             }
 
             if (string.Equals(shape, "Circular", StringComparison.OrdinalIgnoreCase))
             {
-                double d = snap.DimensionA > 0 ? snap.DimensionA : snap.DimensionB;
-                if (d > 0 && snap.LengthByInstanceM > 0)
+                double d = MaxNonZero(
+                    snap.DiameterM,
+                    snap.EquivalentDiameterM);
+
+                if (d > 0)
                 {
-                    double perimeter = Math.PI * d;
-                    return perimeter * snap.LengthByInstanceM;
+                    return Math.Max(d * 0.60, 0.15);
                 }
             }
 
             return 0.0;
         }
 
-        private double EstimateFittingArea(ElementSnapshot snap, string shape, out string method)
+        private double CalculateKgByGauge(string gaugeCode, double perimeterM, double lengthM)
         {
-            double baseArea = EstimateDuctArea(snap, shape);
+            double factor = ResolveGaugeFactor(gaugeCode);
+            if (factor <= 0 || perimeterM <= 0 || lengthM <= 0)
+                return 0.0;
 
-            if (baseArea > 0)
-            {
-                method = "GeometricEstimate";
-                return baseArea * 1.15;
-            }
-
-            method = "FallbackFactor";
-            return 0.0;
+            return ((perimeterM * lengthM) * factor) / 0.025;
         }
 
-        private double ResolveMajorDimensionMm(ElementSnapshot snap, string shape)
+        private double ResolveGaugeFactor(string gaugeCode)
         {
-            double a = snap.DimensionA * 1000.0;
-            double b = snap.DimensionB * 1000.0;
+            switch ((gaugeCode ?? "").Trim())
+            {
+                case "26": return 0.154241;
+                case "24": return 0.177165;
+                case "22": return 0.246965;
+                case "20": return 0.293758;
+                case "18": return 0.386647;
+                default: return 0.0;
+            }
+        }
 
-            if (string.Equals(shape, "Circular", StringComparison.OrdinalIgnoreCase))
-                return Math.Max(a, b);
+        private double MaxNonZero(params double[] values)
+        {
+            double max = 0;
+            if (values == null) return 0;
 
-            return Math.Max(a, b);
+            foreach (var v in values)
+                if (v > max) max = v;
+
+            return max;
         }
     }
 }

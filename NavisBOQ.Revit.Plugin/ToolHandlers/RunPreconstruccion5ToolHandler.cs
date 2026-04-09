@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.Revit.UI;
 using NavisBOQ.Core.HVAC;
 using NavisBOQ.Core.Models;
@@ -158,6 +159,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 options.StrictLimits = GetBool(node, "strict_limits", options.StrictLimits);
                 options.FilterCategory = GetString(node, "filterCategory", options.FilterCategory);
                 options.FilterType = GetString(node, "filterType", options.FilterType);
+                
 
                 return options;
             }

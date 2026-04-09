@@ -80,5 +80,13 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
         double ReadInsulationThicknessM(Element element);
         string ReadLiningType(Element element);
         double ReadLiningThicknessM(Element element);
+
+        string ReadSheetMetalKgRawText(Element element, ElementType elementType);
+        double ReadSheetMetalKgRaw(Element element, ElementType elementType);
+        string ReadFittingSubcategory(Element element, ElementType elementType);
+
+        double ReadPieceBaseM(Element element);
+        double ReadPieceHeightM(Element element);
+        double ReadReportingAngleDeg(Element element);
     }
 }

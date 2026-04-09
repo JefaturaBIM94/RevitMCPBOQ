@@ -12,5 +12,6 @@
 
         public string FilterCategory { get; set; }
         public string FilterType { get; set; }
+       
     }
 }

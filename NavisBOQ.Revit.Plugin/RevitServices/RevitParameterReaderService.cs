@@ -750,5 +750,112 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             return 0.0;
         }
+
+        public string ReadSheetMetalKgRawText(Element element, ElementType elementType)
+        {
+            string value = ReadStringByName(element, "Kilogramos de Lámina");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(element, "Kilogramos de lamina");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(element, "Sheet Metal Kilograms");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Kilogramos de Lámina");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Sheet Metal Kilograms");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            return "";
+        }
+
+        public double ReadSheetMetalKgRaw(Element element, ElementType elementType)
+        {
+            double value = ReadDoubleByName(element, "Kilogramos de Lámina");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(element, "Kilogramos de lamina");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(element, "Sheet Metal Kilograms");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(elementType, "Kilogramos de Lámina");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(elementType, "Sheet Metal Kilograms");
+            if (value > 0)
+                return value;
+
+            return 0.0;
+        }
+
+        public string ReadFittingSubcategory(Element element, ElementType elementType)
+        {
+            string text = ((ReadType(element, elementType) ?? "") + " " + (ReadFamily(element, elementType) ?? "")).ToLowerInvariant();
+
+            if (text.Contains("transition") || text.Contains("reduccion") || text.Contains("reduction"))
+                return "Transition";
+
+            if (text.Contains("elbow") || text.Contains("codo"))
+                return "Elbow";
+
+            if (text.Contains("tee"))
+                return "Tee";
+
+            if (text.Contains("tap"))
+                return "Tap";
+
+            if (text.Contains("cross"))
+                return "Cross";
+
+            return "GenericFitting";
+        }
+
+        public double ReadPieceBaseM(Element element)
+        {
+            double value = ReadDoubleByName(element, "Base de Pieza");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            value = ReadDoubleByName(element, "Piece Base");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            return 0.0;
+        }
+
+        public double ReadPieceHeightM(Element element)
+        {
+            double value = ReadDoubleByName(element, "Altura de Pieza");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            value = ReadDoubleByName(element, "Piece Height");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            return 0.0;
+        }
+
+        public double ReadReportingAngleDeg(Element element)
+        {
+            double value = ReadDoubleByName(element, "Reporting Angle");
+            if (value > 0) return RevitUnitUtils.ToDegrees(value);
+
+            value = ReadDoubleByName(element, "Ángulo de reporte");
+            if (value > 0) return RevitUnitUtils.ToDegrees(value);
+
+            return 0.0;
+        }
+
+
     }
 }

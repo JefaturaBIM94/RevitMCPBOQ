@@ -114,7 +114,16 @@
         public string RawTypeName { get; set; } = "";
         public string RawFamilyName { get; set; } = "";
 
-       
+        public string FittingSubcategory { get; set; } = "";
+        public string SheetMetalKgRawText { get; set; } = "";
+        public double SheetMetalKgRaw { get; set; }
+        public bool HasSheetMetalKgRaw { get; set; }
+
+        public double PieceBaseM { get; set; }
+        public double PieceHeightM { get; set; }
+        public double ReportingAngleDeg { get; set; }
+
+
 
     }
 }

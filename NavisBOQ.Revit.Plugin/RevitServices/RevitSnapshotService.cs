@@ -18,6 +18,9 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 return null;
 
             ElementType elementType = document.GetElement(element.GetTypeId()) as ElementType;
+            string fittingSubcategory = _parameterReader.ReadFittingSubcategory(element, elementType);
+            string sheetMetalKgRawText = _parameterReader.ReadSheetMetalKgRawText(element, elementType);
+            double sheetMetalKgRaw = _parameterReader.ReadSheetMetalKgRaw(element, elementType);
 
             var snapshot = new ElementSnapshot
             {
@@ -113,7 +116,18 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 LevelSource = "native",
                 GeometryConfidence = "high",
                 NestedFamilyDetected = false,
-                PartialData = false
+                PartialData = false,
+
+                FittingSubcategory = fittingSubcategory,
+                SheetMetalKgRawText = sheetMetalKgRawText,
+                SheetMetalKgRaw = sheetMetalKgRaw,
+                HasSheetMetalKgRaw = sheetMetalKgRaw > 0,
+
+                PieceBaseM = _parameterReader.ReadPieceBaseM(element),
+                PieceHeightM = _parameterReader.ReadPieceHeightM(element),
+                ReportingAngleDeg = _parameterReader.ReadReportingAngleDeg(element),
+
+
             };
 
             snapshot.Level = ResolveLevel(document, element);

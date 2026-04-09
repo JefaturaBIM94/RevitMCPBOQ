@@ -62,6 +62,7 @@
     <Compile Include="Electrical\PropertyReadWarning.cs" />
     <Compile Include="HVAC\HvacAggregationService.cs" />
     <Compile Include="HVAC\HvacCategoryClassifierService.cs" />
+    <Compile Include="HVAC\HvacFittingSizeParser.cs" />
     <Compile Include="HVAC\HvacQuantityMapperService.cs" />
     <Compile Include="HVAC\HvacRunRow.cs" />
     <Compile Include="HVAC\HvacSheetMetalWeightService.cs" />

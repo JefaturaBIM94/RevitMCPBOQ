@@ -162,6 +162,7 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                             ["filterCategory"] = new JsonObject { ["type"] = "string" },
                             ["filterType"] = new JsonObject { ["type"] = "string" },
                             ["output_mode"] = new JsonObject { ["type"] = "string" },
+                           
                             ["max_items"] = new JsonObject { ["type"] = "integer" },
                             ["max_nodes"] = new JsonObject { ["type"] = "integer" },
                             ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
