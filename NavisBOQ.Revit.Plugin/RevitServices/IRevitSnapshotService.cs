@@ -5,6 +5,9 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 {
     public interface IRevitSnapshotService
     {
-        ElementSnapshot BuildSnapshot(Document document, Element element);
+        ElementSnapshot BuildSnapshot(
+            Document document,
+            Element element,
+            SnapshotReadOptions readOptions = null);
     }
 }

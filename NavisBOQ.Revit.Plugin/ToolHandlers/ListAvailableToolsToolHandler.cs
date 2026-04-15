@@ -18,8 +18,11 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 "\"ping\", " +
                 "\"active_document_info\", " +
                 "\"diagnose_selection\", " +
+                "\"run_preconstruccion_1\", " +
                 "\"run_preconstruccion_4\", " +
-                 "\"run_preconstruccion_5\", " +
+                "\"run_preconstruccion_5\", " +
+                "\"run_preconstruccion_2\", " +
+                "\"run_preconstruccion_6\", " +
                 "\"expand_electrical_detail\"" +
                 "]" +
                 "}";

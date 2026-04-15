@@ -34,7 +34,12 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
             var executionPolicy = new ExecutionModePolicyService();
 
             var budget = BudgetProfiles.Corrida4;
-            var preflight = preflightService.BuildPreflight(uiApp, options, budget);
+            var readOptions = SnapshotReadOptions.ForCorrida4();
+            var preflight = preflightService.BuildPreflight(
+                uiApp,
+                options,
+                budget,
+                readOptions);
             var execDecision = executionPolicy.EvaluateForRun("run_preconstruccion_4", options, preflight);
 
             if (!execDecision.AllowAutoRun)
@@ -84,7 +89,10 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
             int missingElectricalData = 0;
             int missingSizeText = 0;
 
-            var snapshots = extractionService.ExtractSnapshots(uiApp, options);
+            var snapshots = extractionService.ExtractSnapshots(
+                uiApp,
+                options,
+                readOptions);
 
             foreach (var snap in snapshots)
             {

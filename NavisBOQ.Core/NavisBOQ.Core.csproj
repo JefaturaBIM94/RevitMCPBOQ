@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregation\BoqAggregationService.cs" />
+    <Compile Include="Architecture\ArchitecturalCategoryFilterService.cs" />
     <Compile Include="Constants\CategoryConstants.cs" />
     <Compile Include="Constants\DetailProfileNames.cs" />
     <Compile Include="Constants\ElectricalCategoryConstants.cs" />
@@ -77,15 +78,21 @@
     <Compile Include="Models\ElementSnapshot.cs" />
     <Compile Include="Models\ExecutionBudget.cs" />
     <Compile Include="Models\ExecutionModeDecision.cs" />
+    <Compile Include="Models\RebarRunRow.cs" />
     <Compile Include="Models\RunOptions.cs" />
     <Compile Include="Models\ScopePreflight.cs" />
     <Compile Include="Models\SelectionDiagnosticRow.cs" />
+    <Compile Include="Models\SnapshotReadOptions.cs" />
     <Compile Include="Models\SteelRow.cs" />
     <Compile Include="Models\SteelSummaryRow.cs" />
     <Compile Include="Models\ToolEnvelope.cs" />
     <Compile Include="Models\TypePropertyBag.cs" />
     <Compile Include="Policies\ExecutionModePolicyService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rebar\RebarAggregationService.cs" />
+    <Compile Include="Rebar\RebarBarWeightCatalog.cs" />
+    <Compile Include="Structure\StructuralCategoryFilterService.cs" />
+    <Compile Include="Structure\StructuralQuantityMapperService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Abstractions\" />

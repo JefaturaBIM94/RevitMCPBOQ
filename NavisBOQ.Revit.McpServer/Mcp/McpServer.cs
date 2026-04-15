@@ -28,8 +28,6 @@ namespace NavisBOQ.Revit.McpServer.Mcp
             JsonNode id = requestNode["id"];
             JsonObject @params = requestNode["params"] as JsonObject;
 
-            // IMPORTANTE:
-            // Las notifications JSON-RPC / MCP no se responden.
             if (id == null && method.StartsWith("notifications/"))
                 return "";
 
@@ -114,6 +112,42 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                 },
                 new JsonObject
                 {
+                    ["name"] = "run_preconstruccion_1",
+                    ["description"] = "Ejecuta la Corrida 1 arquitectónica en Revit (selección manual).",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["scope_mode"] = new JsonObject { ["type"] = "string" },
+                            ["level"] = new JsonObject { ["type"] = "string" },
+                            ["output_mode"] = new JsonObject { ["type"] = "string" },
+                            ["max_items"] = new JsonObject { ["type"] = "integer" },
+                            ["max_nodes"] = new JsonObject { ["type"] = "integer" },
+                            ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
+                        }
+                    }
+                },
+                new JsonObject
+                {
+                    ["name"] = "run_preconstruccion_2",
+                    ["description"] = "Ejecuta la Corrida 2 estructural en Revit (selección manual).",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["scope_mode"] = new JsonObject { ["type"] = "string" },
+                            ["level"] = new JsonObject { ["type"] = "string" },
+                            ["output_mode"] = new JsonObject { ["type"] = "string" },
+                            ["max_items"] = new JsonObject { ["type"] = "integer" },
+                            ["max_nodes"] = new JsonObject { ["type"] = "integer" },
+                            ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
+                        }
+                    }
+                },
+                new JsonObject
+                {
                     ["name"] = "run_preconstruccion_4",
                     ["description"] = "Ejecuta la Corrida 4 eléctrica en Revit.",
                     ["inputSchema"] = new JsonObject
@@ -162,10 +196,23 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                             ["filterCategory"] = new JsonObject { ["type"] = "string" },
                             ["filterType"] = new JsonObject { ["type"] = "string" },
                             ["output_mode"] = new JsonObject { ["type"] = "string" },
-                           
                             ["max_items"] = new JsonObject { ["type"] = "integer" },
                             ["max_nodes"] = new JsonObject { ["type"] = "integer" },
                             ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
+                        }
+                    }
+                },
+                new JsonObject
+                {
+                    ["name"] = "run_preconstruccion_6",
+                    ["description"] = "Ejecuta la Corrida 6 de acero de refuerzo en Revit (Rebar / Structural Rebar).",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["scope_mode"] = new JsonObject { ["type"] = "string" },
+                            ["output_mode"] = new JsonObject { ["type"] = "string" }
                         }
                     }
                 }
@@ -191,8 +238,6 @@ namespace NavisBOQ.Revit.McpServer.Mcp
             JsonObject arguments = @params["arguments"] as JsonObject ?? new JsonObject();
 
             var bridge = new PluginBridgeClient();
-
-            // Timeout ampliado para corridas HVAC y pruebas con modelos más pesados
             JsonObject pluginResponse = bridge.Call(toolName, arguments, 60000);
 
             var result = new JsonObject

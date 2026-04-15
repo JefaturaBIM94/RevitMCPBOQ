@@ -78,8 +78,11 @@
     <Compile Include="ToolHandlers\IToolHandler.cs" />
     <Compile Include="ToolHandlers\ListAvailableToolsToolHandler.cs" />
     <Compile Include="ToolHandlers\PingToolHandler.cs" />
+    <Compile Include="ToolHandlers\RunPreconstruccion1ToolHandler.cs" />
+    <Compile Include="ToolHandlers\RunPreconstruccion2ToolHandler.cs" />
     <Compile Include="ToolHandlers\RunPreconstruccion4ToolHandler.cs" />
     <Compile Include="ToolHandlers\RunPreconstruccion5ToolHandler.cs" />
+    <Compile Include="ToolHandlers\RunPreconstruccion6ToolHandler.cs" />
     <Compile Include="Transport\PluginHttpRequest.cs" />
     <Compile Include="Transport\PluginHttpResponse.cs" />
   </ItemGroup>

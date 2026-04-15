@@ -19,7 +19,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             _snapshotService = snapshotService;
         }
 
-        public List<ElementSnapshot> ExtractSnapshots(UIApplication uiApp, RunOptions options)
+        public List<ElementSnapshot> ExtractSnapshots(
+            UIApplication uiApp,
+            RunOptions options,
+            SnapshotReadOptions readOptions = null)
         {
             var result = new List<ElementSnapshot>();
 
@@ -33,7 +36,7 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             foreach (var element in elements)
             {
-                var snap = _snapshotService.BuildSnapshot(doc, element);
+                var snap = _snapshotService.BuildSnapshot(doc, element, readOptions);
                 if (snap == null)
                     continue;
 

@@ -22,8 +22,11 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
         public ScopePreflight BuildPreflight(
             UIApplication uiApp,
             RunOptions options,
-            ExecutionBudget budget)
+            ExecutionBudget budget,
+            SnapshotReadOptions readOptions = null)
         {
+            readOptions = readOptions ?? SnapshotReadOptions.ForCorrida1();
+
             var pre = new ScopePreflight
             {
                 ScopeResolved = ResolveScopeLabel(options)
@@ -52,7 +55,7 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             {
                 visited++;
 
-                var snap = _snapshotService.BuildSnapshot(doc, element);
+                var snap = _snapshotService.BuildSnapshot(doc, element, readOptions);
                 if (snap == null)
                     continue;
 

@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.DB;
+﻿using System.Collections.Generic;
+using Autodesk.Revit.DB;
 using NavisBOQ.Core.Models;
 
 namespace NavisBOQ.Revit.Plugin.RevitServices
@@ -7,160 +8,271 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
     {
         private readonly IRevitParameterReaderService _parameterReader;
 
+        private readonly Dictionary<long, TypePropertyBag> _typeCache =
+            new Dictionary<long, TypePropertyBag>();
+
         public RevitSnapshotService(IRevitParameterReaderService parameterReader)
         {
             _parameterReader = parameterReader;
         }
 
-        public ElementSnapshot BuildSnapshot(Document document, Element element)
+        public ElementSnapshot BuildSnapshot(
+            Document document,
+            Element element,
+            SnapshotReadOptions readOptions = null)
         {
             if (document == null || element == null)
                 return null;
 
-            ElementType elementType = document.GetElement(element.GetTypeId()) as ElementType;
-            string fittingSubcategory = _parameterReader.ReadFittingSubcategory(element, elementType);
-            string sheetMetalKgRawText = _parameterReader.ReadSheetMetalKgRawText(element, elementType);
-            double sheetMetalKgRaw = _parameterReader.ReadSheetMetalKgRaw(element, elementType);
+            readOptions = readOptions ?? new SnapshotReadOptions();
+
+            ElementType elementType = null;
+            if (element.GetTypeId() != ElementId.InvalidElementId)
+                elementType = document.GetElement(element.GetTypeId()) as ElementType;
 
             var snapshot = new ElementSnapshot
             {
                 CanonicalId = element.UniqueId ?? "",
                 ElementId = element.Id != null ? element.Id.Value.ToString() : "",
                 UniqueId = element.UniqueId ?? "",
+                SourceSystem = "Revit"
+            };
 
-                Category = _parameterReader.ReadCategory(element),
-                CategoryId = _parameterReader.ReadCategoryId(element),
-                Family = _parameterReader.ReadFamily(element, elementType),
-                Type = _parameterReader.ReadType(element, elementType),
-                Mark = _parameterReader.ReadMark(element),
+            if (readOptions.IncludeIdentity)
+            {
+                snapshot.Category = ResolveCategory(element);
+                snapshot.CategoryId = _parameterReader.ReadCategoryId(element);
+                snapshot.Family = _parameterReader.ReadFamily(element, elementType);
+                snapshot.Type = _parameterReader.ReadType(element, elementType);
+                snapshot.Mark = _parameterReader.ReadMark(element);
+                snapshot.Level = ResolveLevel(document, element);
 
-                LengthM = _parameterReader.ReadLengthM(element),
-                AreaM2 = _parameterReader.ReadAreaM2(element),
-                VolumeM3 = _parameterReader.ReadVolumeM3(element),
+                snapshot.RawCategory = element.Category != null ? (element.Category.Name ?? "") : "";
+                snapshot.RawFamilyName = snapshot.Family;
+                snapshot.RawTypeName = snapshot.Type;
+            }
 
-                TypeDesc = _parameterReader.ReadTypeDescription(element, elementType),
-                TypeMaterial = _parameterReader.ReadTypeMaterial(element, elementType),
+            if (readOptions.IncludeGeometry)
+            {
+                snapshot.LengthM = _parameterReader.ReadLengthM(element);
+                snapshot.AreaM2 = _parameterReader.ReadAreaM2(element);
+                snapshot.VolumeM3 = _parameterReader.ReadVolumeM3(element);
+                snapshot.LengthByInstanceM = snapshot.LengthM;
+            }
 
-                SystemName = _parameterReader.ReadSystemName(element),
-                SystemType = _parameterReader.ReadSystemType(element),
-                SystemClassification = _parameterReader.ReadSystemClassification(element),
+            if (readOptions.IncludeTypeData && elementType != null)
+            {
+                var bag = GetOrCreateTypeBag(element, elementType);
 
-                ElectricalData = _parameterReader.ReadElectricalData(element),
-                PanelName = _parameterReader.ReadPanelName(element),
-                MainBreakerPower = _parameterReader.ReadMainBreakerPower(element),
-                CustomPartida = _parameterReader.ReadCustomPartida(element),
+                snapshot.TypeDesc = bag.TypeDescription ?? "";
+                snapshot.TypeMaterial = bag.StructuralMaterial ?? "";
+                snapshot.TypeWidth = bag.WidthM ?? 0.0;
+                snapshot.TypeThickness = bag.ThicknessM ?? 0.0;
 
-                OmniClassTitle = _parameterReader.ReadOmniClassTitle(element, elementType),
-                SizeText = _parameterReader.ReadSizeText(element),
-                FamilyTypeName = _parameterReader.ReadFamily(element, elementType),
-                TypeNodeName = _parameterReader.ReadType(element, elementType),
-                CategoryDisplay = _parameterReader.ReadCategory(element),
-                LoadClassification = _parameterReader.ReadLoadClassification(element, elementType),
-                KeynoteNote = _parameterReader.ReadKeynote(element, elementType),
-                TypeComments = _parameterReader.ReadTypeComments(element, elementType),
-                Url = _parameterReader.ReadUrl(element, elementType),
+                snapshot.OmniClassTitle = bag.FamilyTypeName ?? "";
+                snapshot.FamilyTypeName = bag.FamilyTypeName ?? "";
+                snapshot.TypeNodeName = bag.TypeNodeName ?? "";
+                snapshot.CategoryDisplay = bag.CategoryDisplay ?? "";
+                snapshot.LoadClassification = bag.LoadClassification ?? "";
+                snapshot.KeynoteNote = bag.KeynoteNote ?? "";
+                snapshot.TypeComments = bag.TypeComments ?? "";
+                snapshot.Url = bag.Url ?? "";
+                snapshot.DimensionA = bag.DimensionA ?? 0.0;
+                snapshot.DimensionB = bag.DimensionB ?? 0.0;
+            }
 
-                DimensionA = _parameterReader.ReadDimensionA(element, elementType),
-                DimensionB = _parameterReader.ReadDimensionB(element, elementType),
+            if (readOptions.IncludeSystemData)
+            {
+                snapshot.SystemName = _parameterReader.ReadSystemName(element);
+                snapshot.SystemType = _parameterReader.ReadSystemType(element);
+                snapshot.SystemClassification = _parameterReader.ReadSystemClassification(element);
+
+                if (string.IsNullOrWhiteSpace(snapshot.SystemName))
+                    snapshot.SystemName = "Sin sistema MEP";
+
+                if (string.IsNullOrWhiteSpace(snapshot.SystemClassification))
+                    snapshot.SystemClassification = "Sin sistema MEP";
+            }
+
+            if (readOptions.IncludeElectricalData)
+            {
+                snapshot.ElectricalData = _parameterReader.ReadElectricalData(element);
+                snapshot.PanelName = _parameterReader.ReadPanelName(element);
+                snapshot.MainBreakerPower = _parameterReader.ReadMainBreakerPower(element);
+                snapshot.CustomPartida = _parameterReader.ReadCustomPartida(element);
+                snapshot.SizeText = _parameterReader.ReadSizeText(element);
+
+                snapshot.PieceType = "";
+                snapshot.PanelInstance = "";
+            }
+
+            if (readOptions.IncludeSteelData && elementType != null)
+            {
+                var bag = GetOrCreateTypeBag(element, elementType);
+
+                snapshot.NominalWeightKgm = bag.NominalWeightKgm ?? 0.0;
+                snapshot.LinearWeightKgm = bag.LinearWeightKgm ?? 0.0;
+                snapshot.DepthM = bag.DepthM ?? 0.0;
+                snapshot.WidthXM = bag.WidthXM ?? 0.0;
+
+                snapshot.SectionName = bag.SectionName ?? "";
+                snapshot.SectionShape = bag.SectionShape ?? "";
+                snapshot.CodeName = bag.CodeName ?? "";
+                snapshot.CustomWeightRaw = bag.CustomWeightRaw ?? "";
+            }
+
+            if (readOptions.IncludeHvacData)
+            {
+                snapshot.OverallSizeText = _parameterReader.ReadOverallSizeText(element);
+                snapshot.FreeSizeText = _parameterReader.ReadFreeSizeText(element);
+
+                snapshot.DiameterM = _parameterReader.ReadDiameterM(element);
+                snapshot.EquivalentDiameterM = _parameterReader.ReadEquivalentDiameterM(element);
+
+                snapshot.DuctWidthM = _parameterReader.ReadDuctWidthM(element);
+                snapshot.DuctHeightM = _parameterReader.ReadDuctHeightM(element);
+                snapshot.DuctWidth1M = _parameterReader.ReadDuctWidth1M(element);
+                snapshot.DuctHeight1M = _parameterReader.ReadDuctHeight1M(element);
+                snapshot.DuctWidth2M = _parameterReader.ReadDuctWidth2M(element);
+                snapshot.DuctHeight2M = _parameterReader.ReadDuctHeight2M(element);
+                snapshot.DuctLengthM = _parameterReader.ReadDuctLengthM(element);
+                snapshot.DuctLength1M = _parameterReader.ReadDuctLength1M(element);
+
+                snapshot.WidthOffsetM = _parameterReader.ReadWidthOffsetM(element);
+                snapshot.HeightOffsetM = _parameterReader.ReadHeightOffsetM(element);
+                snapshot.CenterRadiusM = _parameterReader.ReadCenterRadiusM(element);
+                snapshot.AngleDeg = _parameterReader.ReadAngleDeg(element);
+
+                snapshot.SegmentName = _parameterReader.ReadPipeSegment(element, elementType);
+                snapshot.SegmentDescription = _parameterReader.ReadPipeSegmentDescription(element, elementType);
+                snapshot.WallThicknessM = _parameterReader.ReadWallThicknessM(element);
+
+                snapshot.FlowValue = _parameterReader.ReadFlowValue(element);
+                snapshot.VelocityValue = _parameterReader.ReadVelocityValue(element);
+                snapshot.PressureValue = _parameterReader.ReadPressureValue(element);
+                snapshot.LossCoefficient = _parameterReader.ReadLossCoefficient(element);
+
+                snapshot.InsulationType = _parameterReader.ReadInsulationType(element);
+                snapshot.InsulationThicknessM = _parameterReader.ReadInsulationThicknessM(element);
+                snapshot.InteriorInsulationType = _parameterReader.ReadLiningType(element);
+                snapshot.InteriorInsulationThicknessM = _parameterReader.ReadLiningThicknessM(element);
+
+                snapshot.FittingSubcategory = _parameterReader.ReadFittingSubcategory(element, elementType);
+                snapshot.SheetMetalKgRawText = _parameterReader.ReadSheetMetalKgRawText(element, elementType);
+                snapshot.SheetMetalKgRaw = _parameterReader.ReadSheetMetalKgRaw(element, elementType);
+                snapshot.HasSheetMetalKgRaw = snapshot.SheetMetalKgRaw > 0;
+
+                snapshot.PieceBaseM = _parameterReader.ReadPieceBaseM(element);
+                snapshot.PieceHeightM = _parameterReader.ReadPieceHeightM(element);
+                snapshot.ReportingAngleDeg = _parameterReader.ReadReportingAngleDeg(element);
+            }
+
+            if (readOptions.IncludeDiagnostics)
+            {
+                snapshot.ResolvedFrom = "instance";
+                snapshot.LevelSource = "native";
+                snapshot.GeometryConfidence = "high";
+                snapshot.NestedFamilyDetected = false;
+                snapshot.PartialData = false;
+            }
+
+            if (snapshot.LengthM <= 0)
+                snapshot.LengthM = snapshot.LengthByInstanceM;
+
+            return snapshot;
+        }
+
+        private TypePropertyBag GetOrCreateTypeBag(Element element, ElementType elementType)
+        {
+            long key = elementType.Id.Value;
+
+            TypePropertyBag bag;
+            if (_typeCache.TryGetValue(key, out bag))
+                return bag;
+
+            bag = new TypePropertyBag
+            {
+                TypeDescription = _parameterReader.ReadTypeDescription(element, elementType),
+                StructuralMaterial = _parameterReader.ReadTypeMaterial(element, elementType),
+                WidthM = _parameterReader.ReadDimensionA(element, elementType),
+                ThicknessM = _parameterReader.ReadDimensionB(element, elementType),
 
                 NominalWeightKgm = _parameterReader.ReadNominalWeightKgm(element, elementType),
                 LinearWeightKgm = _parameterReader.ReadLinearWeightKgm(element, elementType),
+
+                DepthM = 0.0,
+                WidthXM = 0.0,
+
                 SectionName = _parameterReader.ReadSectionName(element, elementType),
                 SectionShape = _parameterReader.ReadSectionShape(element, elementType),
                 CodeName = _parameterReader.ReadCodeName(element, elementType),
                 CustomWeightRaw = _parameterReader.ReadCustomWeightRaw(element, elementType),
 
-                // ============================================================
-                // HVAC / MEP
-                // ============================================================
-                OverallSizeText = _parameterReader.ReadOverallSizeText(element),
-                FreeSizeText = _parameterReader.ReadFreeSizeText(element),
-
-                DiameterM = _parameterReader.ReadDiameterM(element),
-                EquivalentDiameterM = _parameterReader.ReadEquivalentDiameterM(element),
-
-                DuctWidthM = _parameterReader.ReadDuctWidthM(element),
-                DuctHeightM = _parameterReader.ReadDuctHeightM(element),
-                DuctWidth1M = _parameterReader.ReadDuctWidth1M(element),
-                DuctHeight1M = _parameterReader.ReadDuctHeight1M(element),
-                DuctWidth2M = _parameterReader.ReadDuctWidth2M(element),
-                DuctHeight2M = _parameterReader.ReadDuctHeight2M(element),
-                DuctLengthM = _parameterReader.ReadDuctLengthM(element),
-                DuctLength1M = _parameterReader.ReadDuctLength1M(element),
-
-                WidthOffsetM = _parameterReader.ReadWidthOffsetM(element),
-                HeightOffsetM = _parameterReader.ReadHeightOffsetM(element),
-                CenterRadiusM = _parameterReader.ReadCenterRadiusM(element),
-                AngleDeg = _parameterReader.ReadAngleDeg(element),
-
-                SegmentName = _parameterReader.ReadPipeSegment(element, elementType),
-                SegmentDescription = _parameterReader.ReadPipeSegmentDescription(element, elementType),
-                WallThicknessM = _parameterReader.ReadWallThicknessM(element),
-
-                FlowValue = _parameterReader.ReadFlowValue(element),
-                VelocityValue = _parameterReader.ReadVelocityValue(element),
-                PressureValue = _parameterReader.ReadPressureValue(element),
-                LossCoefficient = _parameterReader.ReadLossCoefficient(element),
-
-                InsulationType = _parameterReader.ReadInsulationType(element),
-                InsulationThicknessM = _parameterReader.ReadInsulationThicknessM(element),
-                InteriorInsulationType = _parameterReader.ReadLiningType(element),
-                InteriorInsulationThicknessM = _parameterReader.ReadLiningThicknessM(element),
-
-                RawCategory = _parameterReader.ReadCategory(element),
-                RawFamilyName = _parameterReader.ReadFamily(element, elementType),
-                RawTypeName = _parameterReader.ReadType(element, elementType),
-
-                SourceSystem = "Revit",
-                ResolvedFrom = "instance",
-                LevelSource = "native",
-                GeometryConfidence = "high",
-                NestedFamilyDetected = false,
-                PartialData = false,
-
-                FittingSubcategory = fittingSubcategory,
-                SheetMetalKgRawText = sheetMetalKgRawText,
-                SheetMetalKgRaw = sheetMetalKgRaw,
-                HasSheetMetalKgRaw = sheetMetalKgRaw > 0,
-
-                PieceBaseM = _parameterReader.ReadPieceBaseM(element),
-                PieceHeightM = _parameterReader.ReadPieceHeightM(element),
-                ReportingAngleDeg = _parameterReader.ReadReportingAngleDeg(element),
-
-
+                FamilyTypeName = _parameterReader.ReadOmniClassTitle(element, elementType),
+                TypeNodeName = elementType.Name ?? "",
+                CategoryDisplay = element != null && element.Category != null ? element.Category.Name ?? "" : "",
+                LoadClassification = _parameterReader.ReadLoadClassification(element, elementType),
+                KeynoteNote = _parameterReader.ReadKeynote(element, elementType),
+                TypeComments = _parameterReader.ReadTypeComments(element, elementType),
+                Url = _parameterReader.ReadUrl(element, elementType),
+                DimensionA = _parameterReader.ReadDimensionA(element, elementType),
+                DimensionB = _parameterReader.ReadDimensionB(element, elementType)
             };
 
-            snapshot.Level = ResolveLevel(document, element);
+            _typeCache[key] = bag;
+            return bag;
+        }
 
-            if (snapshot.LengthByInstanceM <= 0)
-                snapshot.LengthByInstanceM = snapshot.LengthM;
+        private string ResolveCategory(Element element)
+        {
+            if (element == null || element.Category == null)
+                return "";
 
-            if (string.IsNullOrWhiteSpace(snapshot.SystemName))
-                snapshot.SystemName = "Sin sistema MEP";
+            int catId = element.Category.Id.IntegerValue;
 
-            if (string.IsNullOrWhiteSpace(snapshot.SystemClassification))
-                snapshot.SystemClassification = "Sin sistema MEP";
+            if (catId == (int)BuiltInCategory.OST_PlumbingFixtures)
+                return "Plumbing Fixtures";
 
-            // ------------------------------------------------------------
-            // Fallbacks HVAC simples
-            // ------------------------------------------------------------
-            if (snapshot.DimensionA <= 0)
-                snapshot.DimensionA = _parameterReader.ReadWidthM(element);
+            if (catId == (int)BuiltInCategory.OST_SpecialityEquipment)
+                return "Specialty Equipment";
 
-            if (snapshot.DimensionB <= 0)
-                snapshot.DimensionB = _parameterReader.ReadHeightM(element);
+            if (catId == (int)BuiltInCategory.OST_CurtainWallPanels)
+                return "Curtain Wall Panels";
 
-            if (snapshot.LengthM <= 0)
-                snapshot.LengthM = snapshot.LengthByInstanceM;
+            if (catId == (int)BuiltInCategory.OST_Railings)
+                return "Railings";
 
-            // Si no vino material de tipo, intenta dejarlo desde comentarios
-            if (string.IsNullOrWhiteSpace(snapshot.TypeMaterial) &&
-                !string.IsNullOrWhiteSpace(snapshot.TypeComments))
-            {
-                snapshot.TypeMaterial = snapshot.TypeComments;
-            }
+            if (catId == (int)BuiltInCategory.OST_Walls)
+                return "Walls";
 
-            return snapshot;
+            if (catId == (int)BuiltInCategory.OST_Floors)
+                return "Floors";
+
+            if (catId == (int)BuiltInCategory.OST_Roofs)
+                return "Roofs";
+
+            if (catId == (int)BuiltInCategory.OST_Ceilings)
+                return "Ceilings";
+
+            if (catId == (int)BuiltInCategory.OST_Doors)
+                return "Doors";
+
+            if (catId == (int)BuiltInCategory.OST_Windows)
+                return "Windows";
+
+            if (catId == (int)BuiltInCategory.OST_GenericModel)
+                return "Generic Models";
+
+            if (catId == (int)BuiltInCategory.OST_StructuralColumns)
+                return "Structural Columns";
+
+            if (catId == (int)BuiltInCategory.OST_StructuralFraming)
+                return "Structural Framing";
+
+            if (catId == (int)BuiltInCategory.OST_StructuralFoundation)
+                return "Structural Foundations";
+
+            return element.Category.Name ?? "";
         }
 
         private string ResolveLevel(Document document, Element element)

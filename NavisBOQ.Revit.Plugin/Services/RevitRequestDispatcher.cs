@@ -21,6 +21,9 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 { "run_preconstruccion_4", new RunPreconstruccion4ToolHandler() },
                 { "expand_electrical_detail", new ExpandElectricalDetailToolHandler() },
                 { "run_preconstruccion_5", new RunPreconstruccion5ToolHandler() },
+                {"run_preconstruccion_1", new RunPreconstruccion1ToolHandler() },
+                {"run_preconstruccion_2", new RunPreconstruccion2ToolHandler() },
+                {"run_preconstruccion_6", new RunPreconstruccion6ToolHandler() },
             };
         }
 
