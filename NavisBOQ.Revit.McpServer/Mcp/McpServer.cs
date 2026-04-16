@@ -202,6 +202,7 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                         }
                     }
                 },
+
                 new JsonObject
                 {
                     ["name"] = "run_preconstruccion_6",
@@ -215,7 +216,26 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                             ["output_mode"] = new JsonObject { ["type"] = "string" }
                         }
                     }
-                }
+                },
+
+                new JsonObject
+                {
+                    ["name"] = "run_preconstruccion_3",
+                    ["description"] = "Ejecuta la Corrida 3 de estructura metalica en Revit (seleccion manual).",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["scope_mode"] = new JsonObject { ["type"] = "string" },
+                            ["level"] = new JsonObject { ["type"] = "string" },
+                            ["output_mode"] = new JsonObject { ["type"] = "string" },
+                            ["max_items"] = new JsonObject { ["type"] = "integer" },
+                            ["max_nodes"] = new JsonObject { ["type"] = "integer" },
+                            ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
+                        }
+                    }
+                },
             };
 
             var result = new JsonObject

@@ -13,23 +13,54 @@ namespace NavisBOQ.Core.Policies
             scope = (scope ?? "all").Trim().ToLowerInvariant();
             bool strict = options != null ? options.StrictLimits : true;
 
-            if (scope == "selection")
-            {
-                result.Mode = "auto_safe";
-                result.AllowAutoRun = true;
-                result.ForceSummary = false;
-                result.Reason = "Selección manual: alcance controlado.";
-                return result;
-            }
-
             string riskBand = preflight != null ? preflight.RiskBand : "green";
             riskBand = (riskBand ?? "green").Trim().ToLowerInvariant();
 
             int candidates = preflight != null ? preflight.CandidateItems : 0;
 
+            // ---------------------------------------------------------
+            // Corrida 5 HVAC
+            // ---------------------------------------------------------
+            if (tool == "run_preconstruccion_5")
+            {
+                if (riskBand == "red" || candidates > 5000)
+                {
+                    result.Mode = strict ? "manual_required" : "auto_summary_only";
+                    result.AllowAutoRun = !strict;
+                    result.ForceSummary = true;
+                    result.Reason = strict
+                        ? "Corrida 5: el alcance HVAC excede el umbral seguro."
+                        : "Corrida 5: alcance rojo; se permite solo resumen por StrictLimits=false.";
+                    result.Warnings.Add("El alcance HVAC puede producir payload excesivo o timeout.");
+                    result.SuggestedActions.Add("Segmenta por nivel.");
+                    result.SuggestedActions.Add("Usa selección actual más acotada.");
+                    result.SuggestedActions.Add("Filtra por categoría HVAC.");
+                    return result;
+                }
+
+                if (riskBand == "yellow" || scope == "selection_set" || scope == "all" || scope == "level")
+                {
+                    result.Mode = "auto_summary_only";
+                    result.AllowAutoRun = true;
+                    result.ForceSummary = true;
+                    result.Reason = "Corrida 5 permitida en automático, pero limitada a resumen por seguridad.";
+                    result.Warnings.Add("Si necesitas detalle completo, reduce el alcance.");
+                    return result;
+                }
+
+                result.Mode = "auto_safe";
+                result.AllowAutoRun = true;
+                result.ForceSummary = false;
+                result.Reason = "Corrida 5 segura para ejecución completa.";
+                return result;
+            }
+
+            // ---------------------------------------------------------
+            // Corrida 4 Eléctrica
+            // ---------------------------------------------------------
             if (tool == "run_preconstruccion_4")
             {
-                if (riskBand == "red")
+                if (riskBand == "red" || candidates > 6000)
                 {
                     result.Mode = strict ? "manual_required" : "auto_summary_only";
                     result.AllowAutoRun = !strict;
@@ -60,6 +91,9 @@ namespace NavisBOQ.Core.Policies
                 return result;
             }
 
+            // ---------------------------------------------------------
+            // Corrida 3
+            // ---------------------------------------------------------
             if (tool == "run_preconstruccion_3")
             {
                 if (riskBand == "red" || candidates > 1500)
@@ -91,6 +125,9 @@ namespace NavisBOQ.Core.Policies
                 return result;
             }
 
+            // ---------------------------------------------------------
+            // Corrida 2
+            // ---------------------------------------------------------
             if (tool == "run_preconstruccion_2")
             {
                 if (riskBand == "red")
@@ -122,6 +159,9 @@ namespace NavisBOQ.Core.Policies
                 return result;
             }
 
+            // ---------------------------------------------------------
+            // Corrida 1
+            // ---------------------------------------------------------
             if (tool == "run_preconstruccion_1")
             {
                 if (riskBand == "red")
@@ -150,6 +190,29 @@ namespace NavisBOQ.Core.Policies
                 result.AllowAutoRun = true;
                 result.ForceSummary = false;
                 result.Reason = "Sin señales de riesgo especial.";
+                return result;
+            }
+
+            // ---------------------------------------------------------
+            // Default / Corridas nuevas
+            // ---------------------------------------------------------
+            if (riskBand == "red")
+            {
+                result.Mode = strict ? "manual_required" : "auto_summary_only";
+                result.AllowAutoRun = !strict;
+                result.ForceSummary = true;
+                result.Reason = strict
+                    ? "El alcance excede el umbral seguro."
+                    : "Alcance rojo; se permite solo resumen por StrictLimits=false.";
+                return result;
+            }
+
+            if (riskBand == "yellow")
+            {
+                result.Mode = "auto_summary_only";
+                result.AllowAutoRun = true;
+                result.ForceSummary = true;
+                result.Reason = "Alcance medio; se fuerza resumen por seguridad.";
                 return result;
             }
 

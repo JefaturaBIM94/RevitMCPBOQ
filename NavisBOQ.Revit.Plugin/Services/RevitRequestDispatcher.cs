@@ -24,6 +24,7 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 {"run_preconstruccion_1", new RunPreconstruccion1ToolHandler() },
                 {"run_preconstruccion_2", new RunPreconstruccion2ToolHandler() },
                 {"run_preconstruccion_6", new RunPreconstruccion6ToolHandler() },
+                {"run_preconstruccion_3", new RunPreconstruccion3ToolHandler() },
             };
         }
 

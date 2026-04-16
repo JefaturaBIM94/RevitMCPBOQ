@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Autodesk.Revit.DB;
 using NavisBOQ.Core.Models;
 
@@ -57,6 +58,23 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 snapshot.LengthM = _parameterReader.ReadLengthM(element);
                 snapshot.AreaM2 = _parameterReader.ReadAreaM2(element);
                 snapshot.VolumeM3 = _parameterReader.ReadVolumeM3(element);
+
+                // Fallback robusto para Corrida 3:
+                // si la lectura geométrica genérica no resuelve, intenta por nombre visible del parámetro.
+                if (snapshot.LengthM <= 0)
+                {
+                    double lengthFallback;
+                    if (TryReadLengthParameterAsMeters(element, "Length", out lengthFallback) && lengthFallback > 0)
+                        snapshot.LengthM = lengthFallback;
+                }
+
+                if (snapshot.VolumeM3 <= 0)
+                {
+                    double volumeFallback;
+                    if (TryReadVolumeParameterAsCubicMeters(element, "Volume", out volumeFallback) && volumeFallback > 0)
+                        snapshot.VolumeM3 = volumeFallback;
+                }
+
                 snapshot.LengthByInstanceM = snapshot.LengthM;
             }
 
@@ -272,7 +290,27 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             if (catId == (int)BuiltInCategory.OST_StructuralFoundation)
                 return "Structural Foundations";
 
-            return element.Category.Name ?? "";
+            string rawName = element.Category.Name ?? "";
+
+            if (string.Equals(rawName, "Structural Connections", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(rawName, "Conexiones estructurales", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Structural Connections";
+            }
+
+            if (string.Equals(rawName, "Plates", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(rawName, "Placas", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Plates";
+            }
+
+            if (string.Equals(rawName, "Structural Stiffeners", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(rawName, "Rigidizadores estructurales", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Structural Stiffeners";
+            }
+
+            return rawName;
         }
 
         private string ResolveLevel(Document document, Element element)
@@ -297,6 +335,58 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 return directLevel.Name ?? "Sin nivel";
 
             return "Sin nivel";
+        }
+
+        private bool TryReadLengthParameterAsMeters(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            Parameter p = element.LookupParameter(parameterName);
+            if (p == null || !p.HasValue)
+                return false;
+
+            if (p.StorageType != StorageType.Double)
+                return false;
+
+            try
+            {
+                value = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), UnitTypeId.Meters);
+                return true;
+            }
+            catch
+            {
+                value = 0.0;
+                return false;
+            }
+        }
+
+        private bool TryReadVolumeParameterAsCubicMeters(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            Parameter p = element.LookupParameter(parameterName);
+            if (p == null || !p.HasValue)
+                return false;
+
+            if (p.StorageType != StorageType.Double)
+                return false;
+
+            try
+            {
+                value = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), UnitTypeId.CubicMeters);
+                return true;
+            }
+            catch
+            {
+                value = 0.0;
+                return false;
+            }
         }
     }
 }

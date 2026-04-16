@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NavisBOQ.Core.Models
+﻿namespace NavisBOQ.Core.Models
 {
     public class SnapshotReadOptions
     {
@@ -27,6 +21,36 @@ namespace NavisBOQ.Core.Models
                 IncludeSystemData = false,
                 IncludeElectricalData = false,
                 IncludeSteelData = false,
+                IncludeHvacData = false,
+                IncludeDiagnostics = true
+            };
+        }
+
+        public static SnapshotReadOptions ForCorrida2()
+        {
+            return new SnapshotReadOptions
+            {
+                IncludeIdentity = true,
+                IncludeGeometry = true,
+                IncludeTypeData = true,
+                IncludeSystemData = false,
+                IncludeElectricalData = false,
+                IncludeSteelData = false,
+                IncludeHvacData = false,
+                IncludeDiagnostics = true
+            };
+        }
+
+        public static SnapshotReadOptions ForCorrida3()
+        {
+            return new SnapshotReadOptions
+            {
+                IncludeIdentity = true,
+                IncludeGeometry = true,
+                IncludeTypeData = true,
+                IncludeSystemData = false,
+                IncludeElectricalData = false,
+                IncludeSteelData = true,
                 IncludeHvacData = false,
                 IncludeDiagnostics = true
             };

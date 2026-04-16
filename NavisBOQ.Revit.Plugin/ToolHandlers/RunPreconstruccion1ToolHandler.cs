@@ -72,6 +72,8 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
 
             if (execDecision.ForceSummary)
                 options.OutputMode = "summary";
+            if (preflight.ForceSummary && string.Equals(options.OutputMode, "detail", StringComparison.OrdinalIgnoreCase))
+                options.OutputMode = "summary";
 
             bool returnDetail = string.Equals(options.OutputMode, "detail", StringComparison.OrdinalIgnoreCase);
 

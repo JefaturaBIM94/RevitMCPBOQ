@@ -69,10 +69,14 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
 
             if (execDecision.ForceSummary)
                 options.OutputMode = "summary";
+            if (preflight.ForceSummary && string.Equals(options.OutputMode, "detail", StringComparison.OrdinalIgnoreCase))
+                options.OutputMode = "summary";
 
             bool returnDetail = string.Equals(options.OutputMode, "detail", StringComparison.OrdinalIgnoreCase);
 
             var warnings = new List<string>();
+            if (execDecision.Warnings != null && execDecision.Warnings.Count > 0)
+                warnings.AddRange(execDecision.Warnings);
             var rows = new List<HvacRunRow>();
             int candidatosValidos = 0;
 

@@ -40,21 +40,29 @@
 
         public static ExecutionBudget Corrida4 => new ExecutionBudget
         {
-            GreenCandidateLimit = 8000,
-            YellowCandidateLimit = 18000,
-            MaxNodesToVisit = 50000,
-            MaxDetailRows = 6000,
+            GreenCandidateLimit = 2500,
+            YellowCandidateLimit = 6000,
+            MaxNodesToVisit = 25000,
+            MaxDetailRows = 800,
             TimeoutMs = 90000
         };
 
         public static ExecutionBudget Corrida5 => new ExecutionBudget
         {
-            GreenCandidateLimit = 4000,
-            YellowCandidateLimit = 10000,
-            MaxNodesToVisit = 25000,
-            MaxDetailRows = 3000,
+            GreenCandidateLimit = 2000,
+            YellowCandidateLimit = 5000,
+            MaxNodesToVisit = 20000,
+            MaxDetailRows = 600,
             TimeoutMs = 90000
         };
 
+        public static ExecutionBudget Corrida6 => new ExecutionBudget
+        {
+            GreenCandidateLimit = 800,
+            YellowCandidateLimit = 2000,
+            MaxNodesToVisit = 5000,
+            MaxDetailRows = 1000,
+            TimeoutMs = 60000
+        };
     }
 }

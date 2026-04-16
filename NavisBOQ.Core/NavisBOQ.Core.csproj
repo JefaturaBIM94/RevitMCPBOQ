@@ -84,6 +84,7 @@
     <Compile Include="Models\SelectionDiagnosticRow.cs" />
     <Compile Include="Models\SnapshotReadOptions.cs" />
     <Compile Include="Models\SteelRow.cs" />
+    <Compile Include="Models\SteelRunRow.cs" />
     <Compile Include="Models\SteelSummaryRow.cs" />
     <Compile Include="Models\ToolEnvelope.cs" />
     <Compile Include="Models\TypePropertyBag.cs" />
@@ -91,6 +92,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rebar\RebarAggregationService.cs" />
     <Compile Include="Rebar\RebarBarWeightCatalog.cs" />
+    <Compile Include="Steel\StructuralSteelAggregationService.cs" />
+    <Compile Include="Steel\StructuralSteelCategoryFilterService.cs" />
+    <Compile Include="Steel\StructuralSteelWeightService.cs" />
     <Compile Include="Structure\StructuralCategoryFilterService.cs" />
     <Compile Include="Structure\StructuralQuantityMapperService.cs" />
   </ItemGroup>

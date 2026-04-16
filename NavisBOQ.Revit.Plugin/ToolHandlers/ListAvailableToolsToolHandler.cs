@@ -22,6 +22,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 "\"run_preconstruccion_4\", " +
                 "\"run_preconstruccion_5\", " +
                 "\"run_preconstruccion_2\", " +
+                "\"run_preconstruccion_3\", " +
                 "\"run_preconstruccion_6\", " +
                 "\"expand_electrical_detail\"" +
                 "]" +

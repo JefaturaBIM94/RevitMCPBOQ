@@ -856,6 +856,112 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             return 0.0;
         }
 
+        public bool TryReadDisplayDoubleByParameterName(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            var p = element.LookupParameter(parameterName);
+            if (p == null || !p.HasValue)
+                return false;
+
+            string text = p.AsValueString();
+            if (string.IsNullOrWhiteSpace(text))
+                text = p.AsString();
+
+            if (!string.IsNullOrWhiteSpace(text))
+                return TryParseFirstDouble(text, out value);
+
+            if (p.StorageType == StorageType.Double)
+            {
+                value = p.AsDouble();
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryReadLengthMByParameterName(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            var p = element.LookupParameter(parameterName);
+            if (p == null || !p.HasValue)
+                return false;
+
+            if (p.StorageType == StorageType.Double)
+            {
+                try
+                {
+                    value = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), UnitTypeId.Meters);
+                    return true;
+                }
+                catch
+                {
+                }
+            }
+
+            string text = p.AsValueString();
+            if (string.IsNullOrWhiteSpace(text))
+                text = p.AsString();
+
+            return TryParseFirstDouble(text, out value);
+        }
+
+        public bool TryReadVolumeM3ByParameterName(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            var p = element.LookupParameter(parameterName);
+            if (p == null || !p.HasValue)
+                return false;
+
+            if (p.StorageType == StorageType.Double)
+            {
+                try
+                {
+                    value = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), UnitTypeId.CubicMeters);
+                    return true;
+                }
+                catch
+                {
+                }
+            }
+
+            string text = p.AsValueString();
+            if (string.IsNullOrWhiteSpace(text))
+                text = p.AsString();
+
+            return TryParseFirstDouble(text, out value);
+        }
+
+        private bool TryParseFirstDouble(string text, out double value)
+        {
+            value = 0.0;
+
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            var match = System.Text.RegularExpressions.Regex.Match(text, @"[-+]?\d+(?:[.,]\d+)?");
+            if (!match.Success)
+                return false;
+
+            string raw = match.Value.Replace(",", ".");
+            return double.TryParse(raw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out value);
+        }
+
+
+
+
+
 
     }
 }

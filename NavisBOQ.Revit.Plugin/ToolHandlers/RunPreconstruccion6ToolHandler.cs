@@ -32,11 +32,28 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 };
             }
 
-            var doc = uiApp.ActiveUIDocument.Document;
+            var budget = BudgetProfiles.Corrida6;
             var selectedIds = uiApp.ActiveUIDocument.Selection.GetElementIds();
 
-            var rows = new List<RebarRunRow>();
             var warnings = new List<string>();
+            var selectedCount = selectedIds != null ? selectedIds.Count : 0;
+
+            string outputMode = options.OutputMode ?? "auto";
+            if (string.Equals(outputMode, "auto", StringComparison.OrdinalIgnoreCase))
+            {
+                outputMode = selectedCount > budget.GreenCandidateLimit ? "summary" : "detail";
+            }
+
+            if (selectedCount > budget.YellowCandidateLimit)
+            {
+                outputMode = "summary";
+                warnings.Add("Corrida 6 forzada a resumen por tamaño del alcance.");
+            }
+
+            bool returnDetail = string.Equals(outputMode, "detail", StringComparison.OrdinalIgnoreCase);
+
+            var doc = uiApp.ActiveUIDocument.Document;
+            var rows = new List<RebarRunRow>();
 
             foreach (var id in selectedIds)
             {
@@ -47,6 +64,12 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 var row = BuildRebarRow(doc, rebar, warnings);
                 if (row != null)
                     rows.Add(row);
+
+                if (returnDetail && rows.Count >= budget.MaxDetailRows)
+                {
+                    warnings.Add("Detalle truncado por tamaño del alcance.");
+                    break;
+                }
             }
 
             var aggregation = new RebarAggregationService();
@@ -59,8 +82,15 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 total_instancias = rows.Count,
                 total_barras = SumQuantity(rows),
                 total_peso_kg = Math.Round(SumWeight(rows), 3),
+                diagnostico = new
+                {
+                    candidatos_validos = rows.Count,
+                    modo = "corrida_6_rebar_safe",
+                    scope_mode = "selection",
+                    output_mode = outputMode
+                },
                 resumen = resumen,
-                detalle = string.Equals(options.OutputMode, "detail", StringComparison.OrdinalIgnoreCase) ? rows : null,
+                detalle = returnDetail ? rows : null,
                 warnings = warnings
             };
 
