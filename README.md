@@ -1,3 +1,20 @@
+![infografia MCP](https://github.com/user-attachments/assets/581601af-6bca-4a6b-94ed-9288f1e22d3e)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # RevitMCPBOQ
 
 Motor de cuantificación BIM asistido por IA para **Revit + MCP**, orientado a preconstrucción, BOQ/BOM y extracción estructurada de cantidades por disciplina.
