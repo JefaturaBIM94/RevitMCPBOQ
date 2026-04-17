@@ -23,9 +23,17 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             UIApplication uiApp,
             RunOptions options,
             ExecutionBudget budget,
-            SnapshotReadOptions readOptions = null)
+            SnapshotReadOptions readOptions = null,
+            Func<ElementSnapshot, bool> snapshotFilter = null)
         {
             readOptions = readOptions ?? SnapshotReadOptions.ForCorrida1();
+            budget = budget ?? BudgetProfiles.Corrida1;
+
+            bool strictLimits = options == null ? true : options.StrictLimits;
+
+            int maxNodesToVisit = budget.MaxNodesToVisit;
+            if (options != null && options.MaxNodes > 0 && options.MaxNodes < maxNodesToVisit)
+                maxNodesToVisit = options.MaxNodes;
 
             var pre = new ScopePreflight
             {
@@ -48,6 +56,7 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             int visited = 0;
             int candidates = 0;
+            int geometricItems = 0;
 
             var elements = _scopeService.ResolveScopeElements(uiApp, options);
 
@@ -59,6 +68,11 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 if (snap == null)
                     continue;
 
+                geometricItems++;
+
+                if (snapshotFilter != null && !snapshotFilter(snap))
+                    continue;
+
                 candidates++;
 
                 if (!string.IsNullOrWhiteSpace(snap.Level))
@@ -67,12 +81,12 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 if (!string.IsNullOrWhiteSpace(snap.Category))
                     categories.Add(snap.Category);
 
-                if (visited >= budget.MaxNodesToVisit)
+                if (visited >= maxNodesToVisit)
                     break;
             }
 
             pre.VisitedNodes = visited;
-            pre.GeometricItems = visited;
+            pre.GeometricItems = geometricItems;
             pre.CandidateItems = candidates;
             pre.DistinctLevels = levels.Count;
             pre.DistinctCategories = categories.Count;
@@ -96,11 +110,12 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             else
             {
                 pre.RiskBand = "red";
-                pre.AllowRun = !options.StrictLimits;
+                pre.AllowRun = !strictLimits;
                 pre.ForceSummary = true;
-                pre.Message = "El alcance excede el umbral seguro. Reduce el alcance antes de correr.";
+                pre.Message = "El alcance excede el umbral seguro. Se recomienda reducir el alcance o ejecutar solo resumen.";
                 pre.SuggestedSegmentation.Add("Usa selección manual.");
                 pre.SuggestedSegmentation.Add("Corre por nivel.");
+                pre.SuggestedSegmentation.Add("Filtra por categoría.");
             }
 
             return pre;

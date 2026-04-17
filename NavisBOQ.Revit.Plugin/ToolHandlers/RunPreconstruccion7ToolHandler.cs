@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Autodesk.Revit.UI;
-using NavisBOQ.Core.HVAC;
+using NavisBOQ.Core.FPS;
 using NavisBOQ.Core.Models;
 using NavisBOQ.Core.Policies;
 using NavisBOQ.Revit.Plugin.Infrastructure;
@@ -11,11 +11,11 @@ using Newtonsoft.Json.Linq;
 
 namespace NavisBOQ.Revit.Plugin.ToolHandlers
 {
-    public class RunPreconstruccion5ToolHandler : IToolHandler
+    public class RunPreconstruccion7ToolHandler : IToolHandler
     {
         public string ToolName
         {
-            get { return "run_preconstruccion_5"; }
+            get { return "run_preconstruccion_7"; }
         }
 
         public ResponseEnvelope Handle(UIApplication uiApp, RequestEnvelope request)
@@ -28,16 +28,14 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
             var preflightService = new RevitPreflightService(scopeService, snapshotService);
             var extractionService = new RevitSnapshotExtractionService(scopeService, snapshotService);
 
-            var classifier = new HvacCategoryClassifierService();
-            var mapper = new HvacQuantityMapperService();
-            var aggregation = new HvacAggregationService();
+            var classifier = new FpsCategoryClassifierService();
+            var mapper = new FpsQuantityMapperService();
+            var aggregation = new FpsAggregationService();
             var executionPolicy = new ExecutionModePolicyService();
 
-            var budget = BudgetProfiles.Corrida5;
+            var budget = BudgetProfiles.Corrida7;
             var readOptions = SnapshotReadOptions.ForCorrida5();
 
-            // Preflight filtrado por categoría opcional para que el risk band
-            // refleje el subset HVAC real que quiere correr el usuario.
             var preflight = preflightService.BuildPreflight(
                 uiApp,
                 options,
@@ -45,10 +43,8 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 readOptions,
                 snap => MatchesOptionalCategoryFilter(snap, options));
 
-            var execDecision = executionPolicy.EvaluateForRun("run_preconstruccion_5", options, preflight);
+            var execDecision = executionPolicy.EvaluateForRun("run_preconstruccion_7", options, preflight);
 
-            // Corrida 5 no debe bloquear en rojo como antes;
-            // si la política pide resumen, degradamos a summary.
             if (!execDecision.AllowAutoRun)
             {
                 options.OutputMode = "summary";
@@ -69,12 +65,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
             if (execDecision.Warnings != null && execDecision.Warnings.Count > 0)
                 warnings.AddRange(execDecision.Warnings);
 
-            if (!execDecision.AllowAutoRun)
-            {
-                warnings.Add("La Corrida 5 fue degradada automáticamente a resumen por tamaño del alcance.");
-            }
-
-            var rows = new List<HvacRunRow>();
+            var rows = new List<FpsRunRow>();
             int candidatosValidos = 0;
 
             var snapshots = extractionService.ExtractSnapshots(uiApp, options, readOptions);
@@ -106,7 +97,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
 
                 if (rows.Count >= budget.MaxDetailRows && returnDetail)
                 {
-                    warnings.Add("Detalle HVAC truncado por tamaño del alcance.");
+                    warnings.Add("Detalle FPS truncado por tamaño del alcance.");
                     break;
                 }
             }
@@ -116,15 +107,15 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
             var envelope = new ToolEnvelope<object>
             {
                 Ok = true,
-                Tool = "run_preconstruccion_5",
+                Tool = "run_preconstruccion_7",
                 ScopeMode = options.ScopeMode ?? "all",
                 OutputMode = options.OutputMode ?? "summary",
                 Preflight = preflight,
                 Warnings = warnings,
-                UserMessage = "Corrida 5 HVAC ejecutada.",
+                UserMessage = "Corrida 7 FPS ejecutada.",
                 Data = new
                 {
-                    rutina = "Preconstruccion 5 - HVAC",
+                    rutina = "Preconstruccion 7 - Fire Protection System",
                     ejecutado = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
                     total_elementos = rows.Count,
                     total_tipos = resumen.Count,
@@ -137,7 +128,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                     diagnostico = new
                     {
                         candidatos_validos = candidatosValidos,
-                        modo = "corrida_5_hvac_fase1_opt",
+                        modo = "corrida_7_fps_safe",
                         filtro_categoria = options.FilterCategory ?? "",
                         filtro_tipo = options.FilterType ?? ""
                     },
@@ -146,7 +137,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 }
             };
 
-            return OkJson(envelope, "Corrida 5 HVAC ejecutada.");
+            return OkJson(envelope, "Corrida 7 FPS ejecutada.");
         }
 
         private static RunOptions ParseRunOptions(string payloadJson)
@@ -188,34 +179,16 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
 
             string filter = options.FilterCategory.Trim();
 
-            if (string.Equals(filter, "hvac_5a", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(filter, "fps_piping", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Equals(snap.Category, "Ducts", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Duct Fittings", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Flex Ducts", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Conductos", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Uniones de conducto", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Conductos flexibles", StringComparison.OrdinalIgnoreCase);
-            }
-
-            if (string.Equals(filter, "hvac_5b", StringComparison.OrdinalIgnoreCase))
-            {
-                return string.Equals(snap.Category, "Pipes", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Pipe Fittings", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Pipe Accessories", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Plumbing Fixtures", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Duct Accessories", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Mechanical Equipment", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Air Terminals", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Generic Models", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Tuberías", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Uniones de tubería", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Accesorios de tuberías", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Aparatos sanitarios", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Accesorios de conductos", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Equipos mecánicos", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Terminales de aire", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(snap.Category, "Modelos genéricos", StringComparison.OrdinalIgnoreCase);
+                return FpsCategoryConstants.IsPipeLike(snap.Category)
+                    || FpsCategoryConstants.IsFlexPipeLike(snap.Category)
+                    || FpsCategoryConstants.IsPipeFittingLike(snap.Category)
+                    || FpsCategoryConstants.IsPipeAccessoryLike(snap.Category)
+                    || FpsCategoryConstants.IsSprinklerLike(snap.Category)
+                    || FpsCategoryConstants.IsGenericLike(snap.Category)
+                    || FpsCategoryConstants.IsPlumbingFixtureLike(snap.Category)
+                    || FpsCategoryConstants.IsPlumbingEquipmentLike(snap.Category);
             }
 
             return string.Equals((snap.Category ?? "").Trim(), filter, StringComparison.OrdinalIgnoreCase);

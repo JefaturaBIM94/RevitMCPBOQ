@@ -123,6 +123,8 @@
         public double PieceHeightM { get; set; }
         public double ReportingAngleDeg { get; set; }
 
+        public double OutsideDiameterM { get; set; }
+
 
 
     }

@@ -64,5 +64,14 @@
             MaxDetailRows = 1000,
             TimeoutMs = 60000
         };
+
+        public static ExecutionBudget Corrida7 => new ExecutionBudget
+        {
+            GreenCandidateLimit = 2500,
+            YellowCandidateLimit = 6000,
+            MaxNodesToVisit = 25000,
+            MaxDetailRows = 1200,
+            TimeoutMs = 90000
+        };
     }
 }

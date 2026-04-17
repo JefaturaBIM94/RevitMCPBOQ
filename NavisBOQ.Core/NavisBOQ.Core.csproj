@@ -61,6 +61,14 @@
     <Compile Include="Electrical\ElectricalSystemInfo.cs" />
     <Compile Include="Electrical\PropertyFieldRequest.cs" />
     <Compile Include="Electrical\PropertyReadWarning.cs" />
+    <Compile Include="FPS\FpsAggregationService.cs" />
+    <Compile Include="FPS\FpsCategoryClassifierService.cs" />
+    <Compile Include="FPS\FpsCategoryConstants.cs" />
+    <Compile Include="FPS\FpsQuantityMapperService.cs" />
+    <Compile Include="FPS\FpsRunRow.cs" />
+    <Compile Include="FPS\FpsSummaryRow.cs" />
+    <Compile Include="FPS\FpsSystemInfo.cs" />
+    <Compile Include="FPS\FpsSystemResolverService.cs" />
     <Compile Include="HVAC\HvacAggregationService.cs" />
     <Compile Include="HVAC\HvacCategoryClassifierService.cs" />
     <Compile Include="HVAC\HvacFittingSizeParser.cs" />

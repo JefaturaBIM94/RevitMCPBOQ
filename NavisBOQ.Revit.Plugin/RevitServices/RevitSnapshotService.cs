@@ -59,8 +59,6 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
                 snapshot.AreaM2 = _parameterReader.ReadAreaM2(element);
                 snapshot.VolumeM3 = _parameterReader.ReadVolumeM3(element);
 
-                // Fallback robusto para Corrida 3:
-                // si la lectura geométrica genérica no resuelve, intenta por nombre visible del parámetro.
                 if (snapshot.LengthM <= 0)
                 {
                     double lengthFallback;
@@ -146,6 +144,7 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
                 snapshot.DiameterM = _parameterReader.ReadDiameterM(element);
                 snapshot.EquivalentDiameterM = _parameterReader.ReadEquivalentDiameterM(element);
+                snapshot.OutsideDiameterM = _parameterReader.ReadOutsideDiameterM(element, elementType);
 
                 snapshot.DuctWidthM = _parameterReader.ReadDuctWidthM(element);
                 snapshot.DuctHeightM = _parameterReader.ReadDuctHeightM(element);

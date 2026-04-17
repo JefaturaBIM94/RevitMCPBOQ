@@ -1,11 +1,15 @@
-﻿using Autodesk.Revit.DB;
-
+﻿using System;
+using Autodesk.Revit.DB;
 using NavisBOQ.Revit.Plugin.Infrastructure;
 
 namespace NavisBOQ.Revit.Plugin.RevitServices
 {
     public class RevitParameterReaderService : IRevitParameterReaderService
     {
+        // ------------------------------------------------------------
+        // Identidad / base
+        // ------------------------------------------------------------
+
         public string ReadCategory(Element element)
         {
             return element != null && element.Category != null ? element.Category.Name ?? "" : "";
@@ -36,6 +40,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
         {
             return ReadStringBuiltIn(element, BuiltInParameter.ALL_MODEL_MARK);
         }
+
+        // ------------------------------------------------------------
+        // Geometría base
+        // ------------------------------------------------------------
 
         public double ReadLengthM(Element element)
         {
@@ -87,6 +95,89 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             return 0.0;
         }
+
+        // ------------------------------------------------------------
+        // Helpers públicos que sigue usando Corrida 3
+        // ------------------------------------------------------------
+
+        public bool TryReadLengthMByParameterName(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            double raw = ReadDoubleByName(element, parameterName);
+            if (raw <= 0)
+                return false;
+
+            value = RevitUnitUtils.ToMeters(raw);
+            return value > 0;
+        }
+
+        public bool TryReadVolumeM3ByParameterName(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            double raw = ReadDoubleByName(element, parameterName);
+            if (raw <= 0)
+                return false;
+
+            value = RevitUnitUtils.ToCubicMeters(raw);
+            return value > 0;
+        }
+
+        public bool TryReadDisplayDoubleByParameterName(Element element, string parameterName, out double value)
+        {
+            value = 0.0;
+
+            if (element == null || string.IsNullOrWhiteSpace(parameterName))
+                return false;
+
+            Parameter p = element.LookupParameter(parameterName);
+            if (p == null || !p.HasValue)
+                return false;
+
+            if (p.StorageType == StorageType.Double)
+            {
+                value = p.AsDouble();
+                return true;
+            }
+
+            string text = p.AsValueString();
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            string normalized = text
+                .Replace(",", ".")
+                .Replace("kg/m", "")
+                .Replace("kg", "")
+                .Trim();
+
+            double parsed;
+            if (double.TryParse(normalized, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out parsed))
+            {
+                value = parsed;
+                return true;
+            }
+
+            if (double.TryParse(normalized, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.CurrentCulture, out parsed))
+            {
+                value = parsed;
+                return true;
+            }
+
+            return false;
+        }
+
+        // ------------------------------------------------------------
+        // Eléctrico
+        // ------------------------------------------------------------
 
         public string ReadPanelName(Element element)
         {
@@ -142,6 +233,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             if (!string.IsNullOrWhiteSpace(value))
                 return value;
 
+            value = ReadStringByName(element, "Potencia de disyuntor principal");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
             return "";
         }
 
@@ -172,6 +267,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             return "";
         }
+
+        // ------------------------------------------------------------
+        // Sistema MEP
+        // ------------------------------------------------------------
 
         public string ReadSystemName(Element element)
         {
@@ -221,6 +320,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             return "";
         }
+
+        // ------------------------------------------------------------
+        // Type / metadata
+        // ------------------------------------------------------------
 
         public string ReadOmniClassTitle(Element element, ElementType elementType)
         {
@@ -281,10 +384,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             double value;
 
             value = ReadDoubleByName(elementType, "A");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
+            if (value > 0) return value;
 
-            value = ReadDoubleByName(elementType, "Ancho");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
+            value = ReadDoubleByName(element, "A");
+            if (value > 0) return value;
 
             return 0.0;
         }
@@ -294,42 +397,100 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             double value;
 
             value = ReadDoubleByName(elementType, "B");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
+            if (value > 0) return value;
 
-            value = ReadDoubleByName(elementType, "Altura");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
+            value = ReadDoubleByName(element, "B");
+            if (value > 0) return value;
 
             return 0.0;
         }
 
+        // ------------------------------------------------------------
+        // Acero / estructura metálica
+        // ------------------------------------------------------------
+
         public double ReadNominalWeightKgm(Element element, ElementType elementType)
         {
+            double value;
+
+            if (TryReadDisplayDoubleByParameterName(elementType, "Nominal Weight", out value))
+                return value;
+
+            if (TryReadDisplayDoubleByParameterName(elementType, "Peso nominal", out value))
+                return value;
+
+            if (TryReadDisplayDoubleByParameterName(elementType, "Weight per Length", out value))
+                return value;
+
             return 0.0;
         }
 
         public double ReadLinearWeightKgm(Element element, ElementType elementType)
         {
+            double value;
+
+            if (TryReadDisplayDoubleByParameterName(elementType, "Weight per Length", out value))
+                return value;
+
+            if (TryReadDisplayDoubleByParameterName(elementType, "Peso por longitud", out value))
+                return value;
+
+            if (TryReadDisplayDoubleByParameterName(elementType, "Nominal Weight", out value))
+                return value;
+
             return 0.0;
         }
 
         public string ReadSectionName(Element element, ElementType elementType)
         {
-            return ReadStringByName(elementType, "Section Name");
+            string value = ReadStringByName(elementType, "Section Name");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Nombre de sección");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            return "";
         }
 
         public string ReadSectionShape(Element element, ElementType elementType)
         {
-            return ReadStringByName(elementType, "Section Shape");
+            string value = ReadStringByName(elementType, "Section Shape");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Forma de sección");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            return "";
         }
 
         public string ReadCodeName(Element element, ElementType elementType)
         {
-            return ReadStringByName(elementType, "Code Name");
+            string value = ReadStringByName(elementType, "Code Name");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Nombre de código");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            return "";
         }
 
         public string ReadCustomWeightRaw(Element element, ElementType elementType)
         {
-            return ReadStringByName(elementType, "VDC_WEIGHT");
+            string value = ReadStringByName(elementType, "VDC_WEIGHT");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Custom Weight");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            return "";
         }
 
         public string ReadTypeMaterial(Element element, ElementType elementType)
@@ -345,9 +506,9 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             return "";
         }
 
-        // ============================================================
-        // HVAC / MEP
-        // ============================================================
+        // ------------------------------------------------------------
+        // HVAC / FPS
+        // ------------------------------------------------------------
 
         public string ReadOverallSizeText(Element element)
         {
@@ -377,15 +538,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
         public double ReadWidthM(Element element)
         {
-            double value;
-
-            value = ReadDoubleByName(element, "Width");
+            double value = ReadDoubleByName(element, "Width");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             value = ReadDoubleByName(element, "Anchura");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
-
-            value = ReadDoubleByName(element, "Ancho");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             return 0.0;
@@ -393,9 +549,7 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
         public double ReadHeightM(Element element)
         {
-            double value;
-
-            value = ReadDoubleByName(element, "Height");
+            double value = ReadDoubleByName(element, "Height");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             value = ReadDoubleByName(element, "Altura");
@@ -406,15 +560,10 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
         public double ReadDiameterM(Element element)
         {
-            double value;
-
-            value = ReadDoubleByName(element, "Diameter");
+            double value = ReadDoubleByName(element, "Diameter");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             value = ReadDoubleByName(element, "Diámetro");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
-
-            value = ReadDoubleByName(element, "Nominal Diameter");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             return 0.0;
@@ -422,12 +571,21 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
         public double ReadEquivalentDiameterM(Element element)
         {
-            double value;
-
-            value = ReadDoubleByName(element, "Equivalent Diameter");
+            double value = ReadDoubleByName(element, "Equivalent Diameter");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             value = ReadDoubleByName(element, "Diámetro equivalente");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            return 0.0;
+        }
+
+        public double ReadOutsideDiameterM(Element element, ElementType elementType)
+        {
+            double value = ReadDoubleByName(element, "Outside Diameter");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            value = ReadDoubleByName(element, "Diámetro exterior");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             return 0.0;
@@ -438,12 +596,18 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
             double value = ReadDoubleByName(element, "Duct Width");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
+            value = ReadDoubleByName(element, "Anchura de conducto");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
             return 0.0;
         }
 
         public double ReadDuctHeightM(Element element)
         {
             double value = ReadDoubleByName(element, "Duct Height");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            value = ReadDoubleByName(element, "Altura de conducto");
             if (value > 0) return RevitUnitUtils.ToMeters(value);
 
             return 0.0;
@@ -593,46 +757,22 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
         public double ReadFlowValue(Element element)
         {
-            double value = ReadDoubleByName(element, "Flow");
-            if (value != 0) return value;
-
-            value = ReadDoubleByName(element, "Caudal");
-            if (value != 0) return value;
-
-            return 0.0;
+            return ReadDoubleByName(element, "Flow");
         }
 
         public double ReadVelocityValue(Element element)
         {
-            double value = ReadDoubleByName(element, "Velocity");
-            if (value != 0) return value;
-
-            value = ReadDoubleByName(element, "Velocidad");
-            if (value != 0) return value;
-
-            return 0.0;
+            return ReadDoubleByName(element, "Velocity");
         }
 
         public double ReadPressureValue(Element element)
         {
-            double value = ReadDoubleByName(element, "Pressure");
-            if (value != 0) return value;
-
-            value = ReadDoubleByName(element, "Presión");
-            if (value != 0) return value;
-
-            return 0.0;
+            return ReadDoubleByName(element, "Pressure");
         }
 
         public double ReadLossCoefficient(Element element)
         {
-            double value = ReadDoubleByName(element, "Loss Coefficient");
-            if (value != 0) return value;
-
-            value = ReadDoubleByName(element, "Coeficiente de pérdida");
-            if (value != 0) return value;
-
-            return 0.0;
+            return ReadDoubleByName(element, "Loss Coefficient");
         }
 
         public string ReadInsulationType(Element element)
@@ -682,6 +822,121 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             return 0.0;
         }
+
+        public string ReadSheetMetalKgRawText(Element element, ElementType elementType)
+        {
+            string value = ReadStringByName(element, "Kilogramos de Lámina");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(element, "Kilogramos de lamina");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(element, "Sheet Metal Kilograms");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Kilogramos de Lámina");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            value = ReadStringByName(elementType, "Sheet Metal Kilograms");
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+
+            return "";
+        }
+
+        public double ReadSheetMetalKgRaw(Element element, ElementType elementType)
+        {
+            double value = ReadDoubleByName(element, "Kilogramos de Lámina");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(element, "Kilogramos de lamina");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(element, "Sheet Metal Kilograms");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(elementType, "Kilogramos de Lámina");
+            if (value > 0)
+                return value;
+
+            value = ReadDoubleByName(elementType, "Sheet Metal Kilograms");
+            if (value > 0)
+                return value;
+
+            return 0.0;
+        }
+
+        public string ReadFittingSubcategory(Element element, ElementType elementType)
+        {
+            string text = ((ReadType(element, elementType) ?? "") + " " + (ReadFamily(element, elementType) ?? "")).ToLowerInvariant();
+
+            if (text.Contains("transition") || text.Contains("reduccion") || text.Contains("reduction"))
+                return "Transition";
+
+            if (text.Contains("elbow") || text.Contains("codo"))
+                return "Elbow";
+
+            if (text.Contains("tee") || text.Contains("yee") || text.Contains("wye"))
+                return "Tee";
+
+            if (text.Contains("tap") || text.Contains("takeoff") || text.Contains("take off"))
+                return "Tap";
+
+            if (text.Contains("cross"))
+                return "Cross";
+
+            if (text.Contains("offset"))
+                return "Offset";
+
+            if (text.Contains("union") || text.Contains("coupling") || text.Contains("connector"))
+                return "GenericFitting";
+
+            return "GenericFitting";
+        }
+
+        public double ReadPieceBaseM(Element element)
+        {
+            double value = ReadDoubleByName(element, "Base de Pieza");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            value = ReadDoubleByName(element, "Piece Base");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            return 0.0;
+        }
+
+        public double ReadPieceHeightM(Element element)
+        {
+            double value = ReadDoubleByName(element, "Altura de Pieza");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            value = ReadDoubleByName(element, "Piece Height");
+            if (value > 0) return RevitUnitUtils.ToMeters(value);
+
+            return 0.0;
+        }
+
+        public double ReadReportingAngleDeg(Element element)
+        {
+            double value = ReadDoubleByName(element, "Reporting Angle");
+            if (value > 0) return RevitUnitUtils.ToDegrees(value);
+
+            value = ReadDoubleByName(element, "Ángulo de reporte");
+            if (value > 0) return RevitUnitUtils.ToDegrees(value);
+
+            return 0.0;
+        }
+
+        // ------------------------------------------------------------
+        // Helpers privados
+        // ------------------------------------------------------------
 
         private string ReadStringBuiltIn(Element element, BuiltInParameter bip)
         {
@@ -750,218 +1005,5 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             return 0.0;
         }
-
-        public string ReadSheetMetalKgRawText(Element element, ElementType elementType)
-        {
-            string value = ReadStringByName(element, "Kilogramos de Lámina");
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-
-            value = ReadStringByName(element, "Kilogramos de lamina");
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-
-            value = ReadStringByName(element, "Sheet Metal Kilograms");
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-
-            value = ReadStringByName(elementType, "Kilogramos de Lámina");
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-
-            value = ReadStringByName(elementType, "Sheet Metal Kilograms");
-            if (!string.IsNullOrWhiteSpace(value))
-                return value;
-
-            return "";
-        }
-
-        public double ReadSheetMetalKgRaw(Element element, ElementType elementType)
-        {
-            double value = ReadDoubleByName(element, "Kilogramos de Lámina");
-            if (value > 0)
-                return value;
-
-            value = ReadDoubleByName(element, "Kilogramos de lamina");
-            if (value > 0)
-                return value;
-
-            value = ReadDoubleByName(element, "Sheet Metal Kilograms");
-            if (value > 0)
-                return value;
-
-            value = ReadDoubleByName(elementType, "Kilogramos de Lámina");
-            if (value > 0)
-                return value;
-
-            value = ReadDoubleByName(elementType, "Sheet Metal Kilograms");
-            if (value > 0)
-                return value;
-
-            return 0.0;
-        }
-
-        public string ReadFittingSubcategory(Element element, ElementType elementType)
-        {
-            string text = ((ReadType(element, elementType) ?? "") + " " + (ReadFamily(element, elementType) ?? "")).ToLowerInvariant();
-
-            if (text.Contains("transition") || text.Contains("reduccion") || text.Contains("reduction"))
-                return "Transition";
-
-            if (text.Contains("elbow") || text.Contains("codo"))
-                return "Elbow";
-
-            if (text.Contains("tee"))
-                return "Tee";
-
-            if (text.Contains("tap"))
-                return "Tap";
-
-            if (text.Contains("cross"))
-                return "Cross";
-
-            return "GenericFitting";
-        }
-
-        public double ReadPieceBaseM(Element element)
-        {
-            double value = ReadDoubleByName(element, "Base de Pieza");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
-
-            value = ReadDoubleByName(element, "Piece Base");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
-
-            return 0.0;
-        }
-
-        public double ReadPieceHeightM(Element element)
-        {
-            double value = ReadDoubleByName(element, "Altura de Pieza");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
-
-            value = ReadDoubleByName(element, "Piece Height");
-            if (value > 0) return RevitUnitUtils.ToMeters(value);
-
-            return 0.0;
-        }
-
-        public double ReadReportingAngleDeg(Element element)
-        {
-            double value = ReadDoubleByName(element, "Reporting Angle");
-            if (value > 0) return RevitUnitUtils.ToDegrees(value);
-
-            value = ReadDoubleByName(element, "Ángulo de reporte");
-            if (value > 0) return RevitUnitUtils.ToDegrees(value);
-
-            return 0.0;
-        }
-
-        public bool TryReadDisplayDoubleByParameterName(Element element, string parameterName, out double value)
-        {
-            value = 0.0;
-
-            if (element == null || string.IsNullOrWhiteSpace(parameterName))
-                return false;
-
-            var p = element.LookupParameter(parameterName);
-            if (p == null || !p.HasValue)
-                return false;
-
-            string text = p.AsValueString();
-            if (string.IsNullOrWhiteSpace(text))
-                text = p.AsString();
-
-            if (!string.IsNullOrWhiteSpace(text))
-                return TryParseFirstDouble(text, out value);
-
-            if (p.StorageType == StorageType.Double)
-            {
-                value = p.AsDouble();
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool TryReadLengthMByParameterName(Element element, string parameterName, out double value)
-        {
-            value = 0.0;
-
-            if (element == null || string.IsNullOrWhiteSpace(parameterName))
-                return false;
-
-            var p = element.LookupParameter(parameterName);
-            if (p == null || !p.HasValue)
-                return false;
-
-            if (p.StorageType == StorageType.Double)
-            {
-                try
-                {
-                    value = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), UnitTypeId.Meters);
-                    return true;
-                }
-                catch
-                {
-                }
-            }
-
-            string text = p.AsValueString();
-            if (string.IsNullOrWhiteSpace(text))
-                text = p.AsString();
-
-            return TryParseFirstDouble(text, out value);
-        }
-
-        public bool TryReadVolumeM3ByParameterName(Element element, string parameterName, out double value)
-        {
-            value = 0.0;
-
-            if (element == null || string.IsNullOrWhiteSpace(parameterName))
-                return false;
-
-            var p = element.LookupParameter(parameterName);
-            if (p == null || !p.HasValue)
-                return false;
-
-            if (p.StorageType == StorageType.Double)
-            {
-                try
-                {
-                    value = UnitUtils.ConvertFromInternalUnits(p.AsDouble(), UnitTypeId.CubicMeters);
-                    return true;
-                }
-                catch
-                {
-                }
-            }
-
-            string text = p.AsValueString();
-            if (string.IsNullOrWhiteSpace(text))
-                text = p.AsString();
-
-            return TryParseFirstDouble(text, out value);
-        }
-
-        private bool TryParseFirstDouble(string text, out double value)
-        {
-            value = 0.0;
-
-            if (string.IsNullOrWhiteSpace(text))
-                return false;
-
-            var match = System.Text.RegularExpressions.Regex.Match(text, @"[-+]?\d+(?:[.,]\d+)?");
-            if (!match.Success)
-                return false;
-
-            string raw = match.Value.Replace(",", ".");
-            return double.TryParse(raw, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out value);
-        }
-
-
-
-
-
-
     }
 }

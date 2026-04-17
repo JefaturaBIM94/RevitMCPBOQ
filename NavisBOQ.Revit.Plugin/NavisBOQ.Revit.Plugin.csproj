@@ -84,6 +84,7 @@
     <Compile Include="ToolHandlers\RunPreconstruccion4ToolHandler.cs" />
     <Compile Include="ToolHandlers\RunPreconstruccion5ToolHandler.cs" />
     <Compile Include="ToolHandlers\RunPreconstruccion6ToolHandler.cs" />
+    <Compile Include="ToolHandlers\RunPreconstruccion7ToolHandler.cs" />
     <Compile Include="Transport\PluginHttpRequest.cs" />
     <Compile Include="Transport\PluginHttpResponse.cs" />
   </ItemGroup>

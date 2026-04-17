@@ -148,6 +148,24 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                 },
                 new JsonObject
                 {
+                    ["name"] = "run_preconstruccion_3",
+                    ["description"] = "Ejecuta la Corrida 3 de estructura metálica en Revit (selección manual).",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["scope_mode"] = new JsonObject { ["type"] = "string" },
+                            ["level"] = new JsonObject { ["type"] = "string" },
+                            ["output_mode"] = new JsonObject { ["type"] = "string" },
+                            ["max_items"] = new JsonObject { ["type"] = "integer" },
+                            ["max_nodes"] = new JsonObject { ["type"] = "integer" },
+                            ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
+                        }
+                    }
+                },
+                new JsonObject
+                {
                     ["name"] = "run_preconstruccion_4",
                     ["description"] = "Ejecuta la Corrida 4 eléctrica en Revit.",
                     ["inputSchema"] = new JsonObject
@@ -202,7 +220,6 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                         }
                     }
                 },
-
                 new JsonObject
                 {
                     ["name"] = "run_preconstruccion_6",
@@ -217,25 +234,27 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                         }
                     }
                 },
-
                 new JsonObject
                 {
-                    ["name"] = "run_preconstruccion_3",
-                    ["description"] = "Ejecuta la Corrida 3 de estructura metalica en Revit (seleccion manual).",
+                    ["name"] = "run_preconstruccion_7",
+                    ["description"] = "Ejecuta la Corrida 7 FPS en Revit.",
                     ["inputSchema"] = new JsonObject
                     {
                         ["type"] = "object",
                         ["properties"] = new JsonObject
                         {
                             ["scope_mode"] = new JsonObject { ["type"] = "string" },
+                            ["selection_set"] = new JsonObject { ["type"] = "string" },
                             ["level"] = new JsonObject { ["type"] = "string" },
+                            ["filterCategory"] = new JsonObject { ["type"] = "string" },
+                            ["filterType"] = new JsonObject { ["type"] = "string" },
                             ["output_mode"] = new JsonObject { ["type"] = "string" },
                             ["max_items"] = new JsonObject { ["type"] = "integer" },
                             ["max_nodes"] = new JsonObject { ["type"] = "integer" },
                             ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
                         }
                     }
-                },
+                }
             };
 
             var result = new JsonObject
@@ -258,7 +277,9 @@ namespace NavisBOQ.Revit.McpServer.Mcp
             JsonObject arguments = @params["arguments"] as JsonObject ?? new JsonObject();
 
             var bridge = new PluginBridgeClient();
-            JsonObject pluginResponse = bridge.Call(toolName, arguments, 60000);
+
+            // Timeout más generoso para corridas con modelos grandes
+            JsonObject pluginResponse = bridge.Call(toolName, arguments, 180000);
 
             var result = new JsonObject
             {

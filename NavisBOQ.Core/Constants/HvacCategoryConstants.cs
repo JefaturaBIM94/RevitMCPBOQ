@@ -11,11 +11,9 @@ namespace NavisBOQ.Core.Constants
                 { "Ducts", ("Conductos", "ml") },
                 { "Conductos", ("Conductos", "ml") },
 
-                // Fittings base
                 { "Duct Fittings", ("Uniones de conducto", "pza") },
                 { "Uniones de conducto", ("Uniones de conducto", "pza") },
 
-                // Auxiliares que el mapper podrá reclasificar en Reducciones / Codos y accesorios
                 { "Rectangular Transition", ("Reducciones", "pza") },
                 { "Transition", ("Reducciones", "pza") },
                 { "Reducciones", ("Reducciones", "pza") },
@@ -38,6 +36,9 @@ namespace NavisBOQ.Core.Constants
 
                 { "Pipe Accessories", ("Accesorios de tuberia", "pza") },
                 { "Accesorios de tuberías", ("Accesorios de tuberia", "pza") },
+
+                { "Plumbing Fixtures", ("Aparatos sanitarios HVAC", "pza") },
+                { "Aparatos sanitarios", ("Aparatos sanitarios HVAC", "pza") },
 
                 { "Mechanical Equipment", ("Equipos mecanicos", "pza") },
                 { "Equipos mecánicos", ("Equipos mecanicos", "pza") },
@@ -87,6 +88,8 @@ namespace NavisBOQ.Core.Constants
                 || Eq(category, "Accesorios de conductos")
                 || Eq(category, "Pipe Accessories")
                 || Eq(category, "Accesorios de tuberías")
+                || Eq(category, "Plumbing Fixtures")
+                || Eq(category, "Aparatos sanitarios")
                 || Eq(category, "Mechanical Equipment")
                 || Eq(category, "Equipos mecánicos")
                 || Eq(category, "Air Terminals")

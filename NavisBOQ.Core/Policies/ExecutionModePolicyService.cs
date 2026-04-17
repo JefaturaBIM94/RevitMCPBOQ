@@ -25,16 +25,14 @@ namespace NavisBOQ.Core.Policies
             {
                 if (riskBand == "red" || candidates > 5000)
                 {
-                    result.Mode = strict ? "manual_required" : "auto_summary_only";
-                    result.AllowAutoRun = !strict;
+                    result.Mode = "auto_summary_only";
+                    result.AllowAutoRun = true;
                     result.ForceSummary = true;
-                    result.Reason = strict
-                        ? "Corrida 5: el alcance HVAC excede el umbral seguro."
-                        : "Corrida 5: alcance rojo; se permite solo resumen por StrictLimits=false.";
-                    result.Warnings.Add("El alcance HVAC puede producir payload excesivo o timeout.");
+                    result.Reason = "Corrida 5: el alcance HVAC excede el umbral seguro. Se forzará resumen para evitar timeout o payload excesivo.";
+                    result.Warnings.Add("El alcance HVAC es demasiado grande para detalle completo.");
                     result.SuggestedActions.Add("Segmenta por nivel.");
-                    result.SuggestedActions.Add("Usa selección actual más acotada.");
                     result.SuggestedActions.Add("Filtra por categoría HVAC.");
+                    result.SuggestedActions.Add("Usa selección actual más acotada si necesitas detalle.");
                     return result;
                 }
 
@@ -193,6 +191,45 @@ namespace NavisBOQ.Core.Policies
                 return result;
             }
 
+
+
+
+
+            //-------------------------------------------------------------
+            // CORRIDA 7 FPS
+
+            if (tool == "run_preconstruccion_7")
+            {
+                if (riskBand == "red" || candidates > 6000)
+                {
+                    result.Mode = "auto_summary_only";
+                    result.AllowAutoRun = true;
+                    result.ForceSummary = true;
+                    result.Reason = "Corrida 7 FPS: el alcance excede el umbral seguro. Se forzará resumen para evitar timeout o payload excesivo.";
+                    result.Warnings.Add("El alcance FPS es demasiado grande para detalle completo.");
+                    result.SuggestedActions.Add("Segmenta por nivel.");
+                    result.SuggestedActions.Add("Filtra por categoría FPS.");
+                    result.SuggestedActions.Add("Usa selección más acotada si necesitas detalle.");
+                    return result;
+                }
+
+                if (riskBand == "yellow" || scope == "selection_set" || scope == "all" || scope == "level")
+                {
+                    result.Mode = "auto_summary_only";
+                    result.AllowAutoRun = true;
+                    result.ForceSummary = true;
+                    result.Reason = "Corrida 7 FPS permitida en automático, pero limitada a resumen por seguridad.";
+                    result.Warnings.Add("Si necesitas detalle completo, reduce el alcance.");
+                    return result;
+                }
+
+                result.Mode = "auto_safe";
+                result.AllowAutoRun = true;
+                result.ForceSummary = false;
+                result.Reason = "Corrida 7 FPS segura para ejecución completa.";
+                return result;
+            }
+
             // ---------------------------------------------------------
             // Default / Corridas nuevas
             // ---------------------------------------------------------
@@ -215,6 +252,10 @@ namespace NavisBOQ.Core.Policies
                 result.Reason = "Alcance medio; se fuerza resumen por seguridad.";
                 return result;
             }
+
+
+
+
 
             result.Mode = "auto_safe";
             result.AllowAutoRun = true;
