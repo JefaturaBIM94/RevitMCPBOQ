@@ -1,8 +1,8 @@
-<img width="1536" height="2752" alt="infografia MCP" src="https://github.com/user-attachments/assets/24ca9a86-0416-45c2-b890-ca12a2390966" />
+
 <img width="2752" height="1536" alt="Gemini_Generated_Image_4gfy5a4gfy5a4gfy" src="https://github.com/user-attachments/assets/66575dca-2ae5-48c7-9c8e-5edaab881df9" />
 
 
-
+<img width="1536" height="2752" alt="infografia MCP" src="https://github.com/user-attachments/assets/24ca9a86-0416-45c2-b890-ca12a2390966" />
 
 
 
