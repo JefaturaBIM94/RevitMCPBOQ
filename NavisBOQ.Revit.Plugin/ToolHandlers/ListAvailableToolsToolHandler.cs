@@ -79,7 +79,22 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                     {
                         name = "run_preconstruccion_7",
                         description = "Corrida 7 Fire Protection System (FPS)."
-                    }
+                    },
+                    new
+                    {
+                        name = "list_allowed_automation_actions",
+                        description = "Lista capacidades y restricciones del Revit Automation Runner."
+                    },
+                    new
+                    {
+                        name = "validate_revit_code",
+                        description = "Valida código C# para Revit API sin ejecutarlo."
+                    },
+                    new
+                    {
+                        name = "execute_revit_code",
+                        description = "Valida, compila y ejecuta código C# controlado contra Revit API."
+                    },
                 }
             };
 

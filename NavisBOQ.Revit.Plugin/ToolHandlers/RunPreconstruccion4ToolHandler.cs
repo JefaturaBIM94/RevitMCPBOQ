@@ -117,7 +117,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 if (string.IsNullOrWhiteSpace(snap.ElectricalData))
                     missingElectricalData++;
 
-                if (IsTubeLikeCategory(snap.Category) && string.IsNullOrWhiteSpace(snap.SizeText))
+                if (RequiresSizeRead(snap.Category) && string.IsNullOrWhiteSpace(snap.SizeText))
                     missingSizeText++;
 
                 var row = mapper.Map(snap, boqCategory, unit);
@@ -145,7 +145,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                 warnings.Add("No se encontró 'Datos eléctricos' en " + missingElectricalData + " elementos. La corrida continuó sin ese dato.");
 
             if (missingSizeText > 0)
-                warnings.Add("No se encontró 'Tamaño/Size' en " + missingSizeText + " tubos. La corrida continuó sin ese dato.");
+                warnings.Add("No se encontró 'Tamaño/Size' en " + missingSizeText + " elementos de Conduits/Conduit Fittings. La corrida continuó sin ese dato.");
 
             var envelope = new ToolEnvelope<object>
             {
@@ -296,7 +296,7 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
             return "Corrida ejecutada correctamente.";
         }
 
-        private static bool IsTubeLikeCategory(string category)
+        private static bool RequiresSizeRead(string category)
         {
             if (string.IsNullOrWhiteSpace(category))
                 return false;
@@ -305,8 +305,10 @@ namespace NavisBOQ.Revit.Plugin.ToolHandlers
                    string.Equals(category, "Conduit", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(category, "Tubos", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(category, "Tubo", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(category, "Pipes", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(category, "Pipe", StringComparison.OrdinalIgnoreCase);
+                   string.Equals(category, "Conduit Fittings", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(category, "Conduit Fitting", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(category, "Accesorios de conducto", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(category, "Accesorios de conduits", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

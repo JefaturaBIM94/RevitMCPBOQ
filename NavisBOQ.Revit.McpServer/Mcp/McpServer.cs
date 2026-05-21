@@ -254,6 +254,59 @@ namespace NavisBOQ.Revit.McpServer.Mcp
                             ["strict_limits"] = new JsonObject { ["type"] = "boolean" }
                         }
                     }
+                },
+                new JsonObject
+                {
+                    ["name"] = "list_allowed_automation_actions",
+                    ["description"] = "Lista capacidades y restricciones del Revit Automation Runner.",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject()
+                    }
+                },
+                new JsonObject
+                {
+                    ["name"] = "validate_revit_code",
+                    ["description"] = "Valida código C# para Revit API sin ejecutarlo.",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["code"] = new JsonObject { ["type"] = "string" },
+                            ["allow_modifications"] = new JsonObject { ["type"] = "boolean" },
+                            ["arguments"] = new JsonObject { ["type"] = "object" }
+                        },
+                        ["required"] = new JsonArray
+                        {
+                            "code"
+                        }
+                    }
+                },
+                new JsonObject
+                {
+                    ["name"] = "execute_revit_code",
+                    ["description"] = "Valida, compila y ejecuta código C# controlado contra Revit API.",
+                    ["inputSchema"] = new JsonObject
+                    {
+                        ["type"] = "object",
+                        ["properties"] = new JsonObject
+                        {
+                            ["code"] = new JsonObject { ["type"] = "string" },
+                            ["mode"] = new JsonObject { ["type"] = "string" },
+                            ["confirmed"] = new JsonObject { ["type"] = "boolean" },
+                            ["allow_modifications"] = new JsonObject { ["type"] = "boolean" },
+                            ["use_transaction"] = new JsonObject { ["type"] = "boolean" },
+                            ["transaction_name"] = new JsonObject { ["type"] = "string" },
+                            ["timeout_ms"] = new JsonObject { ["type"] = "integer" },
+                            ["arguments"] = new JsonObject { ["type"] = "object" }
+                        },
+                        ["required"] = new JsonArray
+                        {
+                            "code"
+                        }
+                    }
                 }
             };
 

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using NavisBOQ.Core.Constants;
 using NavisBOQ.Core.Models;
 
 namespace NavisBOQ.Core.Electrical
@@ -40,7 +40,7 @@ namespace NavisBOQ.Core.Electrical
                 Unidad = unit
             };
 
-            if (IsTubeCategory(snap.Category))
+            if (ElectricalCategoryConstants.IsLinearCategory(snap.Category))
             {
                 double length = snap.LengthByInstanceM > 0 ? snap.LengthByInstanceM : snap.LengthM;
 
@@ -58,19 +58,6 @@ namespace NavisBOQ.Core.Electrical
             }
 
             return row;
-        }
-
-        private static bool IsTubeCategory(string category)
-        {
-            if (string.IsNullOrWhiteSpace(category))
-                return false;
-
-            var c = category.Trim();
-
-            return string.Equals(c, "Conduits", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(c, "Conduit", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(c, "Tubos", StringComparison.OrdinalIgnoreCase) ||
-                   string.Equals(c, "Tubo", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

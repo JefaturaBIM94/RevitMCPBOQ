@@ -19,11 +19,6 @@ namespace NavisBOQ.Core.Constants
             }
         }
 
-        // IMPORTANTE:
-        // En esta implementación:
-        // - Pipes / Tubos = tubos eléctricos
-        // - Pipe Fittings / Uniones de tubo = accesorios eléctricos
-        // - Se excluyen explícitamente categorías de piping/plumbing/mecánicas
         public static readonly HashSet<string> StrictlyForbiddenPlumbingCategories =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -42,6 +37,36 @@ namespace NavisBOQ.Core.Constants
                 "Fire Protection"
             };
 
+        public static readonly HashSet<string> LinearRevitCategories =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "Conduits",
+                "Conduit",
+                "Conductos",
+                "Conducto",
+                "Tubos",
+                "Tubo",
+                "Pipes",
+                "Pipe",
+                "Cable Trays",
+                "Charolas"
+            };
+
+        public static readonly HashSet<string> SizeDrivenRevitCategories =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "Conduits",
+                "Conduit",
+                "Conductos",
+                "Conducto",
+                "Tubos",
+                "Tubo",
+                "Conduit Fittings",
+                "Conduit Fitting",
+                "Accesorios de conducto",
+                "Accesorios de conduits"
+            };
+
         public static readonly Dictionary<string, ElectricalCategoryRule> BoqMap =
             new Dictionary<string, ElectricalCategoryRule>(StringComparer.OrdinalIgnoreCase)
             {
@@ -54,13 +79,19 @@ namespace NavisBOQ.Core.Constants
                         RevitCategories = new List<string>
                         {
                             // ES
+                            "Accesorios de tuberías",
+                            "Accesorios de conducto",
+                            "Accesorios de conduits",
                             "Aparatos eléctricos",
+                            "Dispositivos de comunicación",
                             "Uniones de tubo",
                             "Uniones de bandeja de cables",
                             "Modelos genéricos",
 
                             // EN
+                            "Conduit Fittings",
                             "Electrical Fixtures",
+                            "Communication Devices",
                             "Pipe Fittings",
                             "Cable Tray Fittings",
                             "Generic Models"
@@ -93,9 +124,11 @@ namespace NavisBOQ.Core.Constants
                         {
                             // ES
                             "Dispositivos de iluminación",
+                            "Luminarias",
 
                             // EN
-                            "Lighting Devices"
+                            "Lighting Devices",
+                            "Lighting Fixtures"
                         }
                     }
                 },
@@ -108,11 +141,14 @@ namespace NavisBOQ.Core.Constants
                         RevitCategories = new List<string>
                         {
                             // ES
+                            "Conductos",
                             "Tubos",
                             "Tuberías flexibles",
                             "Bandejas de cables",
 
                             // EN
+                            "Conduits",
+                            "Conduit",
                             "Pipes",
                             "Flexible Pipes",
                             "Cable Trays"
@@ -128,15 +164,33 @@ namespace NavisBOQ.Core.Constants
                         RevitCategories = new List<string>
                         {
                             // ES
-                            "Tubos",
-                            "Tuberías flexibles",
+                            "Sistemas de puesta a tierra",
+                            "Pararrayos",
 
                             // EN
-                            "Pipes",
-                            "Flexible Pipes"
+                            "Grounding",
+                            "Lightning Protection"
                         }
                     }
                 }
             };
+
+        public static bool IsLinearCategory(string revitCategory)
+        {
+            if (string.IsNullOrWhiteSpace(revitCategory))
+                return false;
+
+            string category = revitCategory.Trim();
+            return LinearRevitCategories.Contains(category);
+        }
+
+        public static bool IsSizeDrivenCategory(string revitCategory)
+        {
+            if (string.IsNullOrWhiteSpace(revitCategory))
+                return false;
+
+            string category = revitCategory.Trim();
+            return SizeDrivenRevitCategories.Contains(category);
+        }
     }
 }

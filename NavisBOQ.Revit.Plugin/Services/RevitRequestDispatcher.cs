@@ -13,19 +13,26 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
         public RevitRequestDispatcher()
         {
             _handlers = new Dictionary<string, IToolHandler>(StringComparer.OrdinalIgnoreCase)
-{
+            {
                 { "ping", new PingToolHandler() },
                 { "list_available_tools", new ListAvailableToolsToolHandler() },
                 { "active_document_info", new ActiveDocumentInfoToolHandler() },
                 { "diagnose_selection", new DiagnoseSelectionToolHandler() },
+
+                { "run_preconstruccion_1", new RunPreconstruccion1ToolHandler() },
+                { "run_preconstruccion_2", new RunPreconstruccion2ToolHandler() },
+                { "run_preconstruccion_3", new RunPreconstruccion3ToolHandler() },
                 { "run_preconstruccion_4", new RunPreconstruccion4ToolHandler() },
-                { "expand_electrical_detail", new ExpandElectricalDetailToolHandler() },
                 { "run_preconstruccion_5", new RunPreconstruccion5ToolHandler() },
-                {"run_preconstruccion_1", new RunPreconstruccion1ToolHandler() },
-                {"run_preconstruccion_2", new RunPreconstruccion2ToolHandler() },
-                {"run_preconstruccion_6", new RunPreconstruccion6ToolHandler() },
-                {"run_preconstruccion_3", new RunPreconstruccion3ToolHandler() },
-                {"run_preconstruccion_7", new RunPreconstruccion7ToolHandler() },
+                { "run_preconstruccion_6", new RunPreconstruccion6ToolHandler() },
+                { "run_preconstruccion_7", new RunPreconstruccion7ToolHandler() },
+
+                { "expand_electrical_detail", new ExpandElectricalDetailToolHandler() },
+
+                // Sprint 6 - Revit Automation Runner
+                { "list_allowed_automation_actions", new ListAllowedAutomationActionsToolHandler() },
+                { "validate_revit_code", new ValidateRevitCodeToolHandler() },
+                { "execute_revit_code", new ExecuteRevitCodeToolHandler() }
             };
         }
 
@@ -51,7 +58,17 @@ namespace NavisBOQ.Revit.Plugin.RevitServices
 
             string command = (request.CommandName ?? "").Trim();
 
+            if (string.IsNullOrWhiteSpace(command))
+            {
+                return new ResponseEnvelope
+                {
+                    Ok = false,
+                    Error = "CommandName vacío."
+                };
+            }
+
             IToolHandler handler;
+
             if (!_handlers.TryGetValue(command, out handler))
             {
                 return new ResponseEnvelope

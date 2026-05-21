@@ -8,6 +8,7 @@
         public string CategoriaRevit { get; set; } = "";
         public string Familia { get; set; } = "";
         public string Tipo { get; set; } = "";
+        public string SizeText { get; set; } = "";
         public string Unidad { get; set; } = "";
 
         public int NumElementos { get; set; }

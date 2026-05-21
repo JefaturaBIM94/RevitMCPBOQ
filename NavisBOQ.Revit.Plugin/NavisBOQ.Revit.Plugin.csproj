@@ -31,6 +31,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis, Version=4.8.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.4.8.0\lib\netstandard2.0\Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=4.8.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.4.8.0\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -44,20 +50,52 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Encoding.CodePages, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Encoding.CodePages.7.0.0\lib\net462\System.Text.Encoding.CodePages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Collections.Immutable, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Collections.Immutable.7.0.0\lib\net462\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reflection.Metadata, Version=7.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Reflection.Metadata.7.0.0\lib\net462\System.Reflection.Metadata.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutomationRunner\IRevitCodeCommand.cs" />
+    <Compile Include="AutomationRunner\RevitCodeCompiler.cs" />
+    <Compile Include="AutomationRunner\RevitCodeExecutionRequest.cs" />
+    <Compile Include="AutomationRunner\RevitCodeExecutionResult.cs" />
+    <Compile Include="AutomationRunner\RevitCodeExecutor.cs" />
+    <Compile Include="AutomationRunner\RevitCodeSafetyValidator.cs" />
     <Compile Include="Automation\BridgePoller.cs" />
     <Compile Include="Automation\BridgeRequestHandler.cs" />
     <Compile Include="Automation\RevitBridgeState.cs" />
     <Compile Include="Entry\App.cs" />
     <Compile Include="Entry\AppCommand.cs" />
     <Compile Include="Infrastructure\BridgePaths.cs" />
+    <Compile Include="Infrastructure\PluginAssemblyResolver.cs" />
     <Compile Include="Infrastructure\RequestEnvelope.cs" />
     <Compile Include="Infrastructure\ResponseEnvelope.cs" />
     <Compile Include="Infrastructure\RevitAppContext.cs" />
@@ -74,8 +112,10 @@
     <Compile Include="Services\RevitRequestDispatcher.cs" />
     <Compile Include="ToolHandlers\ActiveDocumentInfoToolHandler.cs" />
     <Compile Include="ToolHandlers\DiagnoseSelectionToolHandler.cs" />
+    <Compile Include="ToolHandlers\ExecuteRevitCodeToolHandler.cs" />
     <Compile Include="ToolHandlers\ExpandElectricalDetailToolHandler.cs" />
     <Compile Include="ToolHandlers\IToolHandler.cs" />
+    <Compile Include="ToolHandlers\ListAllowedAutomationActionsToolHandler.cs" />
     <Compile Include="ToolHandlers\ListAvailableToolsToolHandler.cs" />
     <Compile Include="ToolHandlers\PingToolHandler.cs" />
     <Compile Include="ToolHandlers\RunPreconstruccion1ToolHandler.cs" />
@@ -85,6 +125,7 @@
     <Compile Include="ToolHandlers\RunPreconstruccion5ToolHandler.cs" />
     <Compile Include="ToolHandlers\RunPreconstruccion6ToolHandler.cs" />
     <Compile Include="ToolHandlers\RunPreconstruccion7ToolHandler.cs" />
+    <Compile Include="ToolHandlers\ValidateRevitCodeToolHandler.cs" />
     <Compile Include="Transport\PluginHttpRequest.cs" />
     <Compile Include="Transport\PluginHttpResponse.cs" />
   </ItemGroup>
@@ -100,8 +141,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="NavisBOQ.Revit.Plugin.addin" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.4\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.3.3.4\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

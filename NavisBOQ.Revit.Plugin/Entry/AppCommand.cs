@@ -26,6 +26,8 @@ namespace NavisBOQ.Revit.Plugin.Entry
                 Directory.CreateDirectory(BridgePaths.Root);
                 Log(logPath, "---- Execute iniciado ----");
 
+                RevitAppContext.SetUiApplication(commandData.Application);
+
                 if (!RevitAppContext.IsInitialized)
                 {
                     Log(logPath, "RevitAppContext no inicializado.");

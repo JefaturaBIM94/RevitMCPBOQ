@@ -28,6 +28,8 @@ namespace NavisBOQ.Revit.Plugin.Automation
                     return;
                 }
 
+                RevitAppContext.SetUiApplication(app);
+
                 if (app.ActiveUIDocument == null || app.ActiveUIDocument.Document == null)
                 {
                     WriteErrorResponse("No hay documento activo en Revit.");

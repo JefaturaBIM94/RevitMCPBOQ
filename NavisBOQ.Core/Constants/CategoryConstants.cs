@@ -78,6 +78,10 @@ namespace NavisBOQ.Core.Constants
                 {"Charolas", ("Charolas", "ml")},
                 {"Conduits", ("Conduits", "ml")},
                 {"Conductos", ("Conduits", "ml")},
+                {"Conduit Fittings", ("Conduit Fittings", "pza")},
+                {"Accesorios de conducto", ("Conduit Fittings", "pza")},
+                {"Communication Devices", ("Communication Devices", "pza")},
+                {"Dispositivos de comunicación", ("Communication Devices", "pza")},
                 {"Mechanical Equipment", ("Equipos mecánicos", "pza")},
                 {"Equipos mecánicos", ("Equipos mecánicos", "pza")},
                 {"Air Terminals", ("Difusores", "pza")},
@@ -104,7 +108,9 @@ namespace NavisBOQ.Core.Constants
                 "Lighting Fixtures", "Luminarias",
                 "Mechanical Equipment", "Equipos mecánicos",
                 "Air Terminals", "Difusores",
-                "Electrical Fixtures", "Aparatos eléctricos"
+                "Electrical Fixtures", "Aparatos eléctricos",
+                "Conduit Fittings", "Accesorios de conducto",
+                "Communication Devices", "Dispositivos de comunicación"
             };
 
         public static bool TryMap(string category, out string canonicalName, out string defaultUnit)

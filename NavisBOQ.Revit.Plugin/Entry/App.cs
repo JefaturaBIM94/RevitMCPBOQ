@@ -7,7 +7,9 @@ namespace NavisBOQ.Revit.Plugin.Entry
     public class App : IExternalApplication
     {
         public Result OnStartup(UIControlledApplication application)
+
         {
+            PluginAssemblyResolver.Register();
             RevitAppContext.Initialize(application);
 
             if (RevitBridgeState.BridgeHandler == null)
